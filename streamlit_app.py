@@ -587,30 +587,44 @@ with st.sidebar:
 
     # ── Groq API Key Manager ──────────────────────────────────────────
     cur_key = os.getenv("LLM_API_KEY", "").strip()
+    if hasattr(st, "session_state"):
+        if st.session_state.get("user_groq_api_key"):
+            cur_key = st.session_state.user_groq_api_key.strip()
+        elif st.session_state.get("input_groq_key_sidebar"):
+            cur_key = st.session_state.input_groq_key_sidebar.strip()
+
     has_active_key = bool(cur_key and not cur_key.startswith("sk-placeholder") and len(cur_key) > 10)
 
-    with st.expander("🔑 AI API Key Settings", expanded=not has_active_key):
+    with st.expander("🔑 AI API Key (Groq)", expanded=not has_active_key):
         if has_active_key:
-            st.caption(f"Status: **🟢 Key Active** (`{cur_key[:6]}...{cur_key[-4:]}`)")
+            st.success(f"🟢 **Groq AI Active** (`{cur_key[:6]}...{cur_key[-4:]}`)")
         else:
-            st.warning("Groq API key required for AI reasoning and voice queries.")
+            st.info("Enter your Groq API key below for full AI synthesis and voice interaction:")
 
         key_input = st.text_input(
             "Groq API Key:",
+            value=st.session_state.get("user_groq_api_key", ""),
             type="password",
             placeholder="gsk_...",
             key="input_groq_key_sidebar",
-            help="Get a free Groq API key at https://console.groq.com/keys"
+            help="Free Groq key: https://console.groq.com/keys",
         )
-        if st.button("💾 Save Key", width="stretch", key="save_groq_key_btn"):
+        # Auto-activate when user pastes/changes key
+        if key_input.strip() and key_input.strip() != st.session_state.get("user_groq_api_key"):
+            st.session_state.user_groq_api_key = key_input.strip()
+            os.environ["LLM_API_KEY"] = key_input.strip()
+            os.environ["LLM_BASE_URL"] = "https://api.groq.com/openai/v1"
+            st.rerun()
+
+        if st.button("💾 Apply Key", width="stretch", key="save_groq_key_btn"):
             if key_input.strip():
                 st.session_state.user_groq_api_key = key_input.strip()
                 os.environ["LLM_API_KEY"] = key_input.strip()
                 os.environ["LLM_BASE_URL"] = "https://api.groq.com/openai/v1"
-                st.success("API Key saved!")
+                st.success("API Key applied!")
                 st.rerun()
 
-        st.caption("[Get a free Groq Key in 30 seconds →](https://console.groq.com/keys)")
+        st.caption("👉 [Get a free Groq Key in 30 seconds](https://console.groq.com/keys)")
 
     st.divider()
 

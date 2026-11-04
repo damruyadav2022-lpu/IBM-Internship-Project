@@ -189,6 +189,12 @@ def run_agent(
     context = "\n\n".join(tool_outputs) if tool_outputs else "No specific tool data found for this question."
     augmented_message = f"{message} (Farmer's Location: {location})"
 
+    lang_instruction = "Answer in clear, polite, structured English with practical recommendations and an action checklist."
+    if lang_clean in ("hindi", "hi"):
+        lang_instruction = "कृपया उत्तर पूरी तरह से शुद्ध, सरल और आदरणीय हिंदी (Devanagari script) में दें। व्यावहारिक सुझाव, रोकथाम के उपाय और स्पष्ट बुलेट पॉइंट्स या तालिका का उपयोग करें।"
+    elif lang_clean in ("punjabi", "pa"):
+        lang_instruction = "ਕਿਰਪਾ ਕਰਕੇ ਪੂਰਾ ਜਵਾਬ ਸਰਲ ਅਤੇ ਸਪੱਸ਼ਟ ਪੰਜਾਬੀ (Gurmukhi script) ਵਿੱਚ ਦਿਓ। ਕਿਸਾਨ ਵੀਰਾਂ ਲਈ ਵਿਹਾਰਕ ਸਲਾਹ ਅਤੇ ਬੁਲੇਟ ਪੁਆਇੰਟਾਂ ਦੀ ਵਰਤੋਂ ਕਰੋ।"
+
     full_prompt = (
         f"{system_prompt}\n\n"
         f"--- REAL-TIME AGRICULTURAL DATA ---\n"
@@ -196,9 +202,9 @@ def run_agent(
         f"--- FARMER QUESTION ---\n"
         f"{augmented_message}\n\n"
         f"Instructions:\n"
-        f"1. Answer clearly, accurately, and actionably using the provided agricultural data.\n"
-        f"2. Mention the specific data sources or advisories used.\n"
-        f"3. Keep the tone encouraging, helpful, and respectful to farmers."
+        f"1. {lang_instruction}\n"
+        f"2. Use the provided real-time agricultural data accurately.\n"
+        f"3. Always mention the data source (e.g., Open-Meteo, Agmarknet) and keep the advice actionable for farmers."
     )
 
     if llm is not None:
@@ -215,16 +221,29 @@ def run_agent(
         except Exception as e:
             logger.error(f"LLM synthesis error: {e}")
 
-    # Graceful fallback: return verified domain tool telemetry directly
+    # Polished Fallback: return verified domain tool telemetry in a clear, formatted presentation
     if tool_outputs:
-        retrieved_data = "\n\n".join(tool_outputs)
+        import re
+        cleaned_outputs = []
+        for out in tool_outputs:
+            clean_str = re.sub(r"^\[[a-zA-Z0-9_]+\]\s*", "", out.strip())
+            if clean_str:
+                cleaned_outputs.append(clean_str)
+
+        retrieved_data = "\n\n---\n\n".join(cleaned_outputs)
+
+        if lang_clean in ("hindi", "hi"):
+            header = "🌾 **सत्यापित कृषि परामर्श एवं मौसम बुलेटिन (रियल-टाइम डेटा):**"
+            footer_tip = "💡 *सुझाव: अधिक विस्तृत AI बातचीत और व्यक्तिगत सवालों के लिए बायीं ओर साइडबार में अपनी Groq API Key दर्ज करें।*"
+        elif lang_clean in ("punjabi", "pa"):
+            header = "🌾 **ਪ੍ਰਮਾਣਿਤ ਖੇਤੀਬਾੜੀ ਸਲਾਹ ਅਤੇ ਮੌਸਮ ਜਾਣਕਾਰੀ (ਰੀਅਲ-ਟਾਈਮ ਡੇਟਾ):**"
+            footer_tip = "💡 *ਸੁਝਾਅ: ਵਿਸਤ੍ਰਿਤ AI ਜਵਾਬਾਂ ਲਈ ਖੱਬੇ ਪਾਸੇ ਸਾਈਡਬਾਰ ਵਿੱਚ ਆਪਣੀ Groq API Key ਦਰਜ ਕਰੋ।*"
+        else:
+            header = "🌾 **Verified Agricultural Advisory & Real-Time Intelligence:**"
+            footer_tip = "💡 *Tip: For interactive conversational answers and custom follow-ups, activate your Groq API key in the left sidebar or in Streamlit Cloud Secrets.*"
+
         return {
-            "response": (
-                f"🌾 **Verified Agricultural Data & Real-Time Advisory:**\n\n"
-                f"{retrieved_data}\n\n"
-                f"---\n"
-                f"💡 *Tip: To enable conversational multi-lingual AI explanations in Hindi or Punjabi, please enter your free Groq API key in the sidebar (or add `LLM_API_KEY` in Streamlit Cloud Secrets).* [Get free key →](https://console.groq.com/keys)"
-            ),
+            "response": f"{header}\n\n{retrieved_data}\n\n---\n{footer_tip}",
             "sources": sources,
             "agent_steps": agent_steps,
         }
@@ -232,9 +251,9 @@ def run_agent(
     return {
         "response": (
             "⚠️ **Groq API Key Required for AI Synthesis**\n\n"
-            "To ask custom questions, please enter your free Groq API key in the sidebar on the left.\n\n"
+            "To ask custom free-form questions, please enter your free Groq API key in the left sidebar.\n\n"
             "👉 [Get a free Groq API Key at console.groq.com/keys](https://console.groq.com/keys)\n\n"
-            "*If you deployed on Streamlit Cloud, add `LLM_API_KEY = \"gsk_...\"` in App Settings → Secrets.*"
+            "*If running on Streamlit Cloud, add `LLM_API_KEY = \"gsk_...\"` in App Settings → Secrets.*"
         ),
         "sources": sources,
         "agent_steps": agent_steps,

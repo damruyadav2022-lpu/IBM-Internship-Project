@@ -33,10 +33,14 @@ def _resolve_config():
     # Check Streamlit environment if running inside Streamlit
     try:
         import streamlit as st
-        # 1. User entered key in sidebar UI
-        if hasattr(st, "session_state") and st.session_state.get("user_groq_api_key"):
-            api_key = st.session_state.user_groq_api_key.strip()
-            os.environ["LLM_API_KEY"] = api_key
+        # 1. User entered key in sidebar UI (from explicit save or active input widget)
+        if hasattr(st, "session_state"):
+            if st.session_state.get("user_groq_api_key"):
+                api_key = st.session_state.user_groq_api_key.strip()
+            elif st.session_state.get("input_groq_key_sidebar"):
+                api_key = st.session_state.input_groq_key_sidebar.strip()
+            if api_key:
+                os.environ["LLM_API_KEY"] = api_key
 
         # 2. Key stored in Streamlit Cloud Secrets
         if (not api_key or api_key == "sk-placeholder") and hasattr(st, "secrets"):
@@ -45,6 +49,9 @@ def _resolve_config():
                 os.environ["LLM_API_KEY"] = api_key
             elif "GROQ_API_KEY" in st.secrets:
                 api_key = str(st.secrets["GROQ_API_KEY"]).strip()
+                os.environ["LLM_API_KEY"] = api_key
+            elif "GROQ_KEY" in st.secrets:
+                api_key = str(st.secrets["GROQ_KEY"]).strip()
                 os.environ["LLM_API_KEY"] = api_key
 
             if not base_url and "LLM_BASE_URL" in st.secrets:
