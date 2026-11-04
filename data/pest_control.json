@@ -1,0 +1,326 @@
+{
+  "last_updated": "2024-01-15",
+  "pests_by_crop": {
+    "Wheat": [
+      {
+        "pest_name": "Yellow Rust",
+        "hindi_name": "Peela Tikka",
+        "type": "Fungal Disease",
+        "affected_stage": "Vegetative to Grain Filling",
+        "symptoms": "Yellow-orange powdery streaks on leaves running parallel to leaf veins. Severe infection causes leaf shriveling and yield loss of 30-70%.",
+        "favorable_conditions": "Cool temperature (10-15°C) with high humidity and dew. Occurs in January-March.",
+        "spread": "Wind-borne spores spread rapidly across fields",
+        "prevention": [
+          "Use resistant varieties like HD-2967, PBW-550",
+          "Timely sowing (before November 10)",
+          "Avoid excess nitrogen fertilizer",
+          "Monitor fields weekly during January-March"
+        ],
+        "organic_remedies": [
+          "Spray Trichoderma viride @ 4 g/litre water",
+          "Neem oil spray @ 3 ml/litre",
+          "Copper oxychloride 3g/litre at early stage"
+        ],
+        "chemical_remedies": [
+          "Propiconazole 25 EC @ 0.1% (1 ml/litre) — most effective",
+          "Tebuconazole 250 EW @ 0.1%",
+          "Mancozeb 75 WP @ 2.5 g/litre"
+        ],
+        "economic_threshold": "Apply fungicide when 5% leaves show disease symptoms",
+        "re_spray_interval": "15-21 days if disease persists"
+      },
+      {
+        "pest_name": "Aphids",
+        "hindi_name": "Maahu / Teela",
+        "type": "Insect Pest",
+        "affected_stage": "Tillering to Grain Formation",
+        "symptoms": "Small green/yellow insects clustered on leaves and spikes. Causes yellowing, curling of leaves, stunted growth. Secretes honeydew causing sooty mold.",
+        "favorable_conditions": "Cool and dry weather (15-20°C). Occurs November to February.",
+        "spread": "Colonizes from field edges. Winged adults migrate from other fields.",
+        "prevention": [
+          "Avoid late sowing",
+          "Do not over-apply nitrogen",
+          "Conserve natural enemies (ladybird beetles, lacewings)",
+          "Intercrop with mustard to attract aphid predators"
+        ],
+        "organic_remedies": [
+          "Neem oil @ 3 ml/litre + liquid soap 1 ml/litre",
+          "Neem seed kernel extract (NSKE) 5%",
+          "Dimethoate 30 EC 0.03% (1 ml/litre) if infestation severe"
+        ],
+        "chemical_remedies": [
+          "Imidacloprid 17.8 SL @ 0.5 ml/litre",
+          "Thiamethoxam 25 WG @ 0.5 g/litre",
+          "Dimethoate 30 EC @ 1 ml/litre"
+        ],
+        "economic_threshold": "Spray when 50-100 aphids per tiller or 5-10% tillers infested",
+        "re_spray_interval": "10-15 days"
+      },
+      {
+        "pest_name": "Termites",
+        "hindi_name": "Deemak",
+        "type": "Insect Pest",
+        "affected_stage": "Sowing to Maturity",
+        "symptoms": "Plants show wilting, yellowing. Roots and stems hollow with mud tunnels. Entire plants can be pulled out easily.",
+        "favorable_conditions": "Sandy soils, dry weather, unirrigated fields",
+        "spread": "Underground colony spread",
+        "prevention": [
+          "Apply FYM (Farm Yard Manure) that is well-decomposed only",
+          "Avoid stubble burning, incorporate crop residues",
+          "Deep plowing in summer to expose termite colonies"
+        ],
+        "organic_remedies": [
+          "Mix neem cake @ 250 kg/hectare in soil before sowing",
+          "Drench with neem oil solution around affected plants"
+        ],
+        "chemical_remedies": [
+          "Chlorpyrifos 20 EC @ 2.5 litre/hectare as soil drench",
+          "Imidacloprid 600 FS for seed treatment @ 7 ml/kg seed",
+          "Fipronil 0.3 G @ 25 kg/hectare soil application"
+        ],
+        "economic_threshold": "Apply at first signs of wilting",
+        "re_spray_interval": "Apply as soil treatment before sowing"
+      }
+    ],
+    "Rice": [
+      {
+        "pest_name": "Blast",
+        "hindi_name": "Blast Rog",
+        "type": "Fungal Disease",
+        "affected_stage": "Seedling to Heading",
+        "symptoms": "Diamond-shaped lesions with gray center and brown margins on leaves. Neck blast causes panicle breaking. Can cause 50-80% yield loss.",
+        "favorable_conditions": "Temperature 25-28°C, high humidity >85%, rainy weather",
+        "spread": "Wind-borne spores, infected seeds",
+        "prevention": [
+          "Use blast-resistant varieties (Swarna Sub1, IR64)",
+          "Treat seeds with Tricyclazole 75 WP @ 0.5 g/kg",
+          "Avoid dense planting",
+          "Do not over-apply nitrogen"
+        ],
+        "organic_remedies": [
+          "Silicon-rich soil amendments increase resistance",
+          "Trichoderma-enriched compost application",
+          "Spray Pseudomonas fluorescens @ 5 g/litre"
+        ],
+        "chemical_remedies": [
+          "Tricyclazole 75 WP @ 0.6 g/litre — highly effective",
+          "Isoprothiolane 40 EC @ 1.5 ml/litre",
+          "Carbendazim 50 WP @ 1 g/litre"
+        ],
+        "economic_threshold": "Spray at first lesion appearance. Must spray at panicle initiation.",
+        "re_spray_interval": "10-15 days"
+      },
+      {
+        "pest_name": "Brown Planthopper",
+        "hindi_name": "Bhoora Tunnabhungi",
+        "type": "Insect Pest",
+        "affected_stage": "Tillering to Maturity",
+        "symptoms": "Hopperburn — plants wilt and turn brown in circular patches. Eggs laid in leaf sheaths. Mass population outbreak in humid conditions.",
+        "favorable_conditions": "High humidity, dense crop canopy, excess nitrogen",
+        "spread": "Winged adults migrate. Nymphs spread within field.",
+        "prevention": [
+          "Use resistant varieties",
+          "Reduce nitrogen application",
+          "Avoid continuous flooding",
+          "Alternate wetting and drying irrigation"
+        ],
+        "organic_remedies": [
+          "Light trap @ 1 per hectare to monitor population",
+          "Release Trichoderma and parasitoids",
+          "Neem cake soil application @ 250 kg/hectare"
+        ],
+        "chemical_remedies": [
+          "Buprofezin 25 SC @ 1.25 ml/litre",
+          "Imidacloprid 17.8 SL @ 0.25 ml/litre",
+          "Thiamethoxam 25 WG @ 0.5 g/litre"
+        ],
+        "economic_threshold": "10 hoppers per hill or 1 hopper per stem",
+        "re_spray_interval": "Apply only when threshold reached to preserve natural enemies"
+      },
+      {
+        "pest_name": "Sheath Blight",
+        "hindi_name": "Sheeth Sarakna Rog",
+        "type": "Fungal Disease",
+        "affected_stage": "Tillering to Grain Filling",
+        "symptoms": "Oval/irregular lesions with grayish-green centers on leaf sheaths. Lesions coalesce causing rotting. Yield loss 15-35%.",
+        "favorable_conditions": "High humidity, dense planting, temperature 28-32°C",
+        "spread": "Infected soil, water spread, wind",
+        "prevention": [
+          "Reduce plant density",
+          "Use resistant varieties",
+          "Avoid excess nitrogen",
+          "Drain water periodically"
+        ],
+        "organic_remedies": [
+          "Pseudomonas fluorescens @ 2 kg/hectare",
+          "Trichoderma viride @ 4 g/litre",
+          "Validamycin 3 SL @ 2 ml/litre"
+        ],
+        "chemical_remedies": [
+          "Propiconazole 25 EC @ 1 ml/litre",
+          "Hexaconazole 5 EC @ 1.5 ml/litre",
+          "Carbendazim + Mancozeb @ 2 g/litre"
+        ],
+        "economic_threshold": "Spray when 15-25% tillers show symptoms",
+        "re_spray_interval": "15-20 days"
+      }
+    ],
+    "Tomato": [
+      {
+        "pest_name": "Tomato Leaf Curl Virus",
+        "hindi_name": "Tamatar Patta Marodne Ki Bimari",
+        "type": "Viral Disease",
+        "affected_stage": "All Stages",
+        "symptoms": "Upward or downward curling of leaves, yellowing, stunted growth. Plant becomes bushy. Severe infection causes no fruit setting.",
+        "favorable_conditions": "Hot and dry weather. Whitefly population high.",
+        "spread": "Transmitted by whitefly (Bemisia tabaci). No direct plant-to-plant spread.",
+        "prevention": [
+          "Use virus-resistant/tolerant varieties (Abhilash, Arka Rakshak)",
+          "Use insect-proof net houses for nursery",
+          "Control whitefly population with yellow sticky traps",
+          "Remove and destroy infected plants immediately"
+        ],
+        "organic_remedies": [
+          "Spray neem oil @ 3 ml/litre to control whitefly vector",
+          "Reflective mulch to repel whiteflies",
+          "Install yellow sticky traps @ 15-20 per acre"
+        ],
+        "chemical_remedies": [
+          "Imidacloprid 17.8 SL @ 0.5 ml/litre for whitefly control",
+          "Thiamethoxam 25 WG @ 0.5 g/litre",
+          "No chemical cure for virus — focus on vector control"
+        ],
+        "economic_threshold": "Remove infected plants. Spray when whitefly >2 per leaf",
+        "re_spray_interval": "7-10 days for vector control"
+      },
+      {
+        "pest_name": "Early Blight",
+        "hindi_name": "Ageti Jhulsa",
+        "type": "Fungal Disease",
+        "affected_stage": "Seedling to Fruiting",
+        "symptoms": "Dark brown concentric rings on older leaves giving target-board appearance. Yellowing around lesions. Defoliation in severe cases.",
+        "favorable_conditions": "Warm (24-29°C), humid conditions, wet foliage",
+        "spread": "Soil-borne, wind, rain splash, infected transplants",
+        "prevention": [
+          "Use certified disease-free seedlings",
+          "Avoid overhead irrigation",
+          "Crop rotation with non-solanaceous crops",
+          "Remove infected leaves immediately"
+        ],
+        "organic_remedies": [
+          "Copper-based fungicide (Bordeaux mixture 1%)",
+          "Neem oil + garlic extract spray",
+          "Spray Bacillus subtilis bioformulation"
+        ],
+        "chemical_remedies": [
+          "Mancozeb 75 WP @ 2.5 g/litre",
+          "Chlorothalonil 75 WP @ 2 g/litre",
+          "Iprodione 50 WP @ 2 g/litre"
+        ],
+        "economic_threshold": "Spray preventively every 7-10 days during humid season",
+        "re_spray_interval": "7-10 days"
+      },
+      {
+        "pest_name": "Fruit Borer",
+        "hindi_name": "Phal Bhedak",
+        "type": "Insect Pest",
+        "affected_stage": "Flowering to Harvest",
+        "symptoms": "Larvae bore into fruits causing holes. Infested fruit rots. Entry holes visible on fruit surface. Major quality and quantity loss.",
+        "favorable_conditions": "Temperature 25-30°C. Coincides with flowering.",
+        "spread": "Adult moth lays eggs on flowers and young fruits",
+        "prevention": [
+          "Pheromone traps @ 5 per acre for monitoring",
+          "Remove and destroy damaged fruits",
+          "Intercrop with marigold as trap crop"
+        ],
+        "organic_remedies": [
+          "Bacillus thuringiensis (Bt) @ 2 g/litre",
+          "Neem seed kernel extract 5%",
+          "Spinosad @ 0.5 ml/litre"
+        ],
+        "chemical_remedies": [
+          "Emamectin benzoate 5 SG @ 0.4 g/litre",
+          "Chlorantraniliprole 18.5 SC @ 0.4 ml/litre",
+          "Indoxacarb 14.5 SC @ 1 ml/litre"
+        ],
+        "economic_threshold": "Spray when 5% fruits show infestation",
+        "re_spray_interval": "10-12 days"
+      }
+    ],
+    "Cotton": [
+      {
+        "pest_name": "Pink Bollworm",
+        "hindi_name": "Gulabi Sundi",
+        "type": "Insect Pest",
+        "affected_stage": "Flowering to Boll Development",
+        "symptoms": "Pink caterpillar enters square/boll. Immature bolls fall. Seed damage inside boll. Lint quality deteriorates.",
+        "favorable_conditions": "Temperature 25-35°C. Occurs July-October.",
+        "spread": "Adult moth lays eggs on squares/bolls. Caterpillar enters within 24 hours.",
+        "prevention": [
+          "Use Bt cotton varieties (approved varieties)",
+          "Pheromone traps @ 5 per acre",
+          "Destroy cotton stalks after harvest",
+          "Crop rotation with non-cotton crops"
+        ],
+        "organic_remedies": [
+          "Pheromone mass trapping (funnel trap with gossy-plure lure)",
+          "Bacillus thuringiensis @ 2 g/litre",
+          "Neem oil 3% spray"
+        ],
+        "chemical_remedies": [
+          "Emamectin benzoate 5 SG @ 0.4 g/litre",
+          "Chlorpyrifos 20 EC @ 2 ml/litre",
+          "Quinalphos 25 EC @ 2 ml/litre"
+        ],
+        "economic_threshold": "3-5 moths per trap per night. 10% infested squares.",
+        "re_spray_interval": "10-14 days"
+      },
+      {
+        "pest_name": "Whitefly",
+        "hindi_name": "Safed Makhi",
+        "type": "Insect Pest",
+        "affected_stage": "All Stages",
+        "symptoms": "Tiny white insects on lower leaf surface. Yellowing, leaf curl, sooty mould on honeydew secretion. Also transmits Cotton Leaf Curl Virus.",
+        "favorable_conditions": "Hot and dry weather (30-40°C). Dusty conditions.",
+        "spread": "Wind dispersal. Adult migration. Dense crop favors buildup.",
+        "prevention": [
+          "Avoid excessive nitrogen",
+          "Use reflective silver mulch",
+          "Yellow sticky traps @ 20 per acre",
+          "Maintain field hygiene"
+        ],
+        "organic_remedies": [
+          "Neem oil 3% + soap solution spray",
+          "NSKE (Neem Seed Kernel Extract) 5%",
+          "Verticillium lecanii bioinsecticide"
+        ],
+        "chemical_remedies": [
+          "Thiamethoxam 25 WG @ 0.5 g/litre",
+          "Spiromesifen 22.9 SC @ 0.75 ml/litre",
+          "Acetamiprid 20 SP @ 0.4 g/litre"
+        ],
+        "economic_threshold": "10-15 adults per leaf or 15-20% plants affected",
+        "re_spray_interval": "7-10 days. Rotate insecticides to avoid resistance."
+      }
+    ]
+  },
+  "general_pest_management": {
+    "IPM_principles": [
+      "Monitor fields regularly (at least twice a week)",
+      "Record pest population and crop damage",
+      "Use economic threshold levels before spraying",
+      "Conserve natural enemies (predators and parasitoids)",
+      "Use biological controls first, then chemical as last resort",
+      "Rotate pesticides to prevent resistance",
+      "Maintain field hygiene and destroy crop residues"
+    ],
+    "organic_inputs": {
+      "Neem Oil": "Broad spectrum insecticide/fungicide. Mix 3-5 ml/litre with liquid soap. Safe for beneficial insects when used carefully.",
+      "Trichoderma": "Biocontrol fungus. Controls soilborne fungal diseases. Apply 4 g/litre as soil drench.",
+      "Pseudomonas fluorescens": "Biocontrol bacterium. Controls bacterial and fungal diseases. Apply 5 g/litre.",
+      "Bacillus thuringiensis (Bt)": "Biological insecticide. Controls caterpillars/borers. Apply 2 g/litre spray on eggs/larvae.",
+      "NSKE 5%": "Neem Seed Kernel Extract. Antifeedant and repellent. Apply 5% solution.",
+      "Beauveria bassiana": "Entomopathogenic fungus. Controls thrips, whitefly, aphids. Apply 5 g/litre."
+    }
+  }
+}

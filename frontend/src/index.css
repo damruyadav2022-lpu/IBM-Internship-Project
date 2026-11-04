@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    @apply bg-farm-50 text-gray-800 font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  :root {
+    --scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-farm-600 hover:bg-farm-700 text-white font-semibold px-4 py-2 rounded-lg
+           transition-colors duration-200 focus:outline-none focus:ring-2
+           focus:ring-farm-400 focus:ring-offset-2 disabled:opacity-50
+           disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-white hover:bg-farm-50 text-farm-700 font-medium px-4 py-2 rounded-lg
+           border border-farm-300 transition-colors duration-200 focus:outline-none
+           focus:ring-2 focus:ring-farm-400 focus:ring-offset-2;
+  }
+
+  .card {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none
+           focus:ring-2 focus:ring-farm-400 focus:border-transparent
+           placeholder-gray-400 text-gray-800 bg-white transition-shadow duration-200;
+  }
+
+  .tag {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+
+  .source-tag {
+    @apply tag bg-farm-100 text-farm-700;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 rounded-full;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-farm-300 rounded-full hover:bg-farm-400;
+}
+
+/* Prose styling for markdown in chat bubbles */
+.prose-farm {
+  @apply text-gray-800;
+}
+.prose-farm h1, .prose-farm h2, .prose-farm h3 {
+  @apply font-semibold text-farm-800 mt-3 mb-1;
+}
+.prose-farm p {
+  @apply mb-2 leading-relaxed;
+}
+.prose-farm ul, .prose-farm ol {
+  @apply pl-5 mb-2 space-y-1;
+}
+.prose-farm li {
+  @apply leading-relaxed;
+}
+.prose-farm strong {
+  @apply font-semibold text-farm-900;
+}
+.prose-farm code {
+  @apply bg-farm-100 text-farm-800 px-1.5 py-0.5 rounded text-sm font-mono;
+}
+
+/* Typing animation */
+.typing-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #16a34a;
+  animation: bounce 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}

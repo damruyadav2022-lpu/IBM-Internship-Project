@@ -1,0 +1,42 @@
+# Environments
+.env
+.venv/
+venv/
+env/
+ENV/
+
+# Python bytecode & caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Heavy Datasets (Training raw data - 87,000 images, 1.3GB)
+# Sample test images in data/plantvillage/test/ are retained for instant demo testing
+data/plantvillage/New Plant Diseases Dataset(Augmented)/
+
+# Cache & Hugging Face temp directories
+yolo_weights/.cache/
+yolo_weights/huggingface/
+.cache/
+*.tmp
+
+# IDE & OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node / Frontend build (if built)
+frontend/node_modules/
+frontend/build/
+package-lock.json
+
+# Streamlit runtime state
+.streamlit/secrets.toml

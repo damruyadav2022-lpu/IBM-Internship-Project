@@ -1,0 +1,285 @@
+{
+  "last_updated": "2024-01-15",
+  "cities": {
+    "Delhi": {
+      "state": "Delhi",
+      "forecasts": [
+        {
+          "date": "2024-01-15",
+          "day": "Monday",
+          "temperature": { "min": 8, "max": 20, "unit": "Celsius" },
+          "humidity": 65,
+          "rainfall": 0,
+          "wind_speed": 12,
+          "condition": "Partly Cloudy",
+          "advisory": "Good conditions for wheat irrigation. Avoid pesticide spraying due to moderate winds."
+        },
+        {
+          "date": "2024-01-16",
+          "day": "Tuesday",
+          "temperature": { "min": 7, "max": 18, "unit": "Celsius" },
+          "humidity": 70,
+          "rainfall": 5,
+          "wind_speed": 8,
+          "condition": "Light Rain",
+          "advisory": "Light rain expected. Hold off irrigation. Good time to apply fertilizer after rain clears."
+        },
+        {
+          "date": "2024-01-17",
+          "day": "Wednesday",
+          "temperature": { "min": 6, "max": 16, "unit": "Celsius" },
+          "humidity": 80,
+          "rainfall": 15,
+          "wind_speed": 10,
+          "condition": "Moderate Rain",
+          "advisory": "Moderate rainfall. Ensure proper drainage in fields. Delay harvesting activities."
+        },
+        {
+          "date": "2024-01-18",
+          "day": "Thursday",
+          "temperature": { "min": 9, "max": 21, "unit": "Celsius" },
+          "humidity": 60,
+          "rainfall": 0,
+          "wind_speed": 14,
+          "condition": "Sunny",
+          "advisory": "Clear skies. Ideal day for field inspection and pesticide application in morning hours."
+        },
+        {
+          "date": "2024-01-19",
+          "day": "Friday",
+          "temperature": { "min": 10, "max": 23, "unit": "Celsius" },
+          "humidity": 55,
+          "rainfall": 0,
+          "wind_speed": 11,
+          "condition": "Clear",
+          "advisory": "Warm and dry. Good for harvesting rabi crops. Ensure adequate irrigation for young plants."
+        }
+      ],
+      "crop_impact": "Rabi season active. Wheat and mustard growing well. Monitor for frost in early morning hours."
+    },
+    "Mumbai": {
+      "state": "Maharashtra",
+      "forecasts": [
+        {
+          "date": "2024-01-15",
+          "day": "Monday",
+          "temperature": { "min": 19, "max": 32, "unit": "Celsius" },
+          "humidity": 72,
+          "rainfall": 0,
+          "wind_speed": 15,
+          "condition": "Humid & Sunny",
+          "advisory": "High humidity. Watch for fungal diseases in vegetable crops. Apply preventive fungicide."
+        },
+        {
+          "date": "2024-01-16",
+          "day": "Tuesday",
+          "temperature": { "min": 20, "max": 33, "unit": "Celsius" },
+          "humidity": 75,
+          "rainfall": 0,
+          "wind_speed": 18,
+          "condition": "Partly Cloudy",
+          "advisory": "Suitable for harvesting fruits and vegetables. Strong coastal winds — secure young plants."
+        },
+        {
+          "date": "2024-01-17",
+          "day": "Wednesday",
+          "temperature": { "min": 18, "max": 30, "unit": "Celsius" },
+          "humidity": 80,
+          "rainfall": 8,
+          "wind_speed": 20,
+          "condition": "Cloudy with Rain",
+          "advisory": "Rain expected. Delay spraying operations. Check drainage in low-lying fields."
+        },
+        {
+          "date": "2024-01-18",
+          "day": "Thursday",
+          "temperature": { "min": 20, "max": 31, "unit": "Celsius" },
+          "humidity": 70,
+          "rainfall": 0,
+          "wind_speed": 16,
+          "condition": "Mostly Sunny",
+          "advisory": "Good conditions. Ideal for transplanting vegetable seedlings and orchard maintenance."
+        },
+        {
+          "date": "2024-01-19",
+          "day": "Friday",
+          "temperature": { "min": 21, "max": 34, "unit": "Celsius" },
+          "humidity": 68,
+          "rainfall": 0,
+          "wind_speed": 13,
+          "condition": "Sunny",
+          "advisory": "Hot and dry. Ensure morning and evening irrigation for vegetable crops."
+        }
+      ],
+      "crop_impact": "Good for winter vegetables. Onion and potato harvest season. Monitor soil moisture closely."
+    },
+    "Pune": {
+      "state": "Maharashtra",
+      "forecasts": [
+        {
+          "date": "2024-01-15",
+          "day": "Monday",
+          "temperature": { "min": 12, "max": 28, "unit": "Celsius" },
+          "humidity": 58,
+          "rainfall": 0,
+          "wind_speed": 10,
+          "condition": "Clear",
+          "advisory": "Excellent farming conditions. Good for all field activities — ploughing, sowing, and spraying."
+        },
+        {
+          "date": "2024-01-16",
+          "day": "Tuesday",
+          "temperature": { "min": 11, "max": 27, "unit": "Celsius" },
+          "humidity": 62,
+          "rainfall": 0,
+          "wind_speed": 9,
+          "condition": "Partly Cloudy",
+          "advisory": "Mild and pleasant. Ideal for transplanting and irrigation. Good for sugarcane ratoon management."
+        },
+        {
+          "date": "2024-01-17",
+          "day": "Wednesday",
+          "temperature": { "min": 10, "max": 25, "unit": "Celsius" },
+          "humidity": 68,
+          "rainfall": 3,
+          "wind_speed": 12,
+          "condition": "Light Showers",
+          "advisory": "Light showers. No major farming disruption. Good for soil moisture replenishment."
+        },
+        {
+          "date": "2024-01-18",
+          "day": "Thursday",
+          "temperature": { "min": 13, "max": 29, "unit": "Celsius" },
+          "humidity": 55,
+          "rainfall": 0,
+          "wind_speed": 11,
+          "condition": "Sunny",
+          "advisory": "Warm and sunny. Best day for harvesting and drying crops. Apply second dose of fertilizer."
+        },
+        {
+          "date": "2024-01-19",
+          "day": "Friday",
+          "temperature": { "min": 14, "max": 30, "unit": "Celsius" },
+          "humidity": 52,
+          "rainfall": 0,
+          "wind_speed": 10,
+          "condition": "Clear",
+          "advisory": "Excellent visibility and dry conditions. Good for aerial survey and drone-based spraying."
+        }
+      ],
+      "crop_impact": "Grape harvest ongoing. Sugarcane crushing season. Good time for onion and potato planting."
+    },
+    "Lucknow": {
+      "state": "Uttar Pradesh",
+      "forecasts": [
+        {
+          "date": "2024-01-15",
+          "day": "Monday",
+          "temperature": { "min": 7, "max": 19, "unit": "Celsius" },
+          "humidity": 74,
+          "rainfall": 0,
+          "wind_speed": 8,
+          "condition": "Foggy Morning",
+          "advisory": "Dense fog in morning. Delay field spraying. Afternoon is suitable for irrigation and weeding."
+        },
+        {
+          "date": "2024-01-16",
+          "day": "Tuesday",
+          "temperature": { "min": 6, "max": 17, "unit": "Celsius" },
+          "humidity": 78,
+          "rainfall": 2,
+          "wind_speed": 7,
+          "condition": "Foggy & Light Rain",
+          "advisory": "Foggy and wet. Avoid heavy machinery in waterlogged areas. Check wheat for yellow rust."
+        },
+        {
+          "date": "2024-01-17",
+          "day": "Wednesday",
+          "temperature": { "min": 8, "max": 20, "unit": "Celsius" },
+          "humidity": 70,
+          "rainfall": 0,
+          "wind_speed": 9,
+          "condition": "Partly Sunny",
+          "advisory": "Improving conditions. Good for top dressing urea in wheat fields at tillering stage."
+        },
+        {
+          "date": "2024-01-18",
+          "day": "Thursday",
+          "temperature": { "min": 9, "max": 22, "unit": "Celsius" },
+          "humidity": 65,
+          "rainfall": 0,
+          "wind_speed": 11,
+          "condition": "Sunny",
+          "advisory": "Clear and warm. Ideal for potato earthing up and mustard pod formation monitoring."
+        },
+        {
+          "date": "2024-01-19",
+          "day": "Friday",
+          "temperature": { "min": 10, "max": 23, "unit": "Celsius" },
+          "humidity": 60,
+          "rainfall": 0,
+          "wind_speed": 12,
+          "condition": "Clear",
+          "advisory": "Warm and dry. Good for field inspection. Watch for aphid infestation in mustard."
+        }
+      ],
+      "crop_impact": "Wheat tillering stage. Mustard flowering. Potato tuber development. Critical irrigation period."
+    },
+    "Jaipur": {
+      "state": "Rajasthan",
+      "forecasts": [
+        {
+          "date": "2024-01-15",
+          "day": "Monday",
+          "temperature": { "min": 9, "max": 24, "unit": "Celsius" },
+          "humidity": 45,
+          "rainfall": 0,
+          "wind_speed": 16,
+          "condition": "Dry & Sunny",
+          "advisory": "Hot and dry with strong winds. Ensure mulching to retain soil moisture. Avoid light irrigation."
+        },
+        {
+          "date": "2024-01-16",
+          "day": "Tuesday",
+          "temperature": { "min": 8, "max": 22, "unit": "Celsius" },
+          "humidity": 48,
+          "rainfall": 0,
+          "wind_speed": 14,
+          "condition": "Mostly Sunny",
+          "advisory": "Good weather for mustard and cumin harvesting. Dry conditions ideal for post-harvest drying."
+        },
+        {
+          "date": "2024-01-17",
+          "day": "Wednesday",
+          "temperature": { "min": 7, "max": 20, "unit": "Celsius" },
+          "humidity": 52,
+          "rainfall": 0,
+          "wind_speed": 12,
+          "condition": "Partly Cloudy",
+          "advisory": "Mild conditions. Good for garlic and coriander field management. Apply irrigation in evening."
+        },
+        {
+          "date": "2024-01-18",
+          "day": "Thursday",
+          "temperature": { "min": 10, "max": 25, "unit": "Celsius" },
+          "humidity": 42,
+          "rainfall": 0,
+          "wind_speed": 15,
+          "condition": "Sunny",
+          "advisory": "Warm and clear. Ideal for barley grain filling stage. Monitor for powdery mildew."
+        },
+        {
+          "date": "2024-01-19",
+          "day": "Friday",
+          "temperature": { "min": 11, "max": 26, "unit": "Celsius" },
+          "humidity": 40,
+          "rainfall": 0,
+          "wind_speed": 17,
+          "condition": "Dry & Sunny",
+          "advisory": "Hot and windy. Drip irrigation recommended. Protect plants from wind damage with windbreaks."
+        }
+      ],
+      "crop_impact": "Rabi crops maturing. Mustard and cumin nearing harvest. Water conservation critical in dry conditions."
+    }
+  }
+}

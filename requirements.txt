@@ -1,0 +1,31 @@
+# Core Web Frameworks
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+streamlit>=1.32.0
+requests>=2.31.0
+pandas>=2.1.4
+pydantic>=2.5.3
+pydantic-settings>=2.1.0
+python-dotenv>=1.0.0
+aiofiles>=23.2.1
+python-multipart>=0.0.7
+
+# AI, Agentic Reasoning & Vector Search
+langchain>=0.1.5
+langchain-community>=0.0.17
+langchain-openai>=0.0.5
+openai>=1.10.0
+chromadb>=0.4.22
+sentence-transformers>=2.3.1
+httpx>=0.26.0
+
+# Deep Learning & Computer Vision (YOLOv8)
+torch>=2.1.0
+torchvision>=0.16.0
+ultralytics>=8.1.0
+Pillow>=10.2.0
+opencv-python-headless>=4.9.0
+pypdfium2>=4.26.0
+
+# Voice Processing (STT & TTS)
+gTTS>=2.5.0

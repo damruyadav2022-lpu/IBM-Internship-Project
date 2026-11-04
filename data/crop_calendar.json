@@ -1,0 +1,229 @@
+{
+  "last_updated": "2024-01-15",
+  "seasons": {
+    "Kharif": {
+      "description": "Kharif crops are sown at the beginning of monsoon (June-July) and harvested after monsoon (September-October)",
+      "sowing_months": ["June", "July"],
+      "harvesting_months": ["September", "October", "November"],
+      "crops": [
+        {
+          "name": "Rice",
+          "hindi_name": "Chawal / Dhan",
+          "soil_types": ["Clay", "Loamy Clay", "Alluvial"],
+          "soil_ph": "5.5 - 7.0",
+          "water_requirement": "High (1200-1600 mm)",
+          "growing_period_days": 110,
+          "expected_yield_per_acre": "20-25 quintals",
+          "suitable_regions": ["Punjab", "Haryana", "West Bengal", "Uttar Pradesh", "Andhra Pradesh"],
+          "key_varieties": ["IR-36", "Pusa Basmati 1121", "Swarna Sub1", "MTU 7029"],
+          "fertilizer_requirement": "NPK 120:60:40 kg/hectare",
+          "key_diseases": ["Blast", "Brown Spot", "Sheath Blight"],
+          "planting_tips": "Transplant 21-25 day old seedlings. Maintain 5 cm water level during initial growth.",
+          "advisory": "Ideal for areas with annual rainfall above 1000mm. Nursery sowing in May-June."
+        },
+        {
+          "name": "Maize",
+          "hindi_name": "Makka",
+          "soil_types": ["Loam", "Sandy Loam", "Well-drained Alluvial"],
+          "soil_ph": "6.0 - 7.5",
+          "water_requirement": "Medium (500-700 mm)",
+          "growing_period_days": 85,
+          "expected_yield_per_acre": "20-30 quintals",
+          "suitable_regions": ["Karnataka", "Andhra Pradesh", "Rajasthan", "Madhya Pradesh", "Bihar"],
+          "key_varieties": ["Ganga Safed 2", "Deccan 101", "HQPM-1", "NK 6240"],
+          "fertilizer_requirement": "NPK 150:75:50 kg/hectare",
+          "key_diseases": ["Fall Armyworm", "Downy Mildew", "Stem Borer"],
+          "planting_tips": "Sow at 60x25 cm spacing. Earthing up at 25-30 days after sowing.",
+          "advisory": "Very profitable in dry areas. Hybrid varieties give 30-40% higher yield."
+        },
+        {
+          "name": "Cotton",
+          "hindi_name": "Kapas",
+          "soil_types": ["Black Cotton Soil", "Deep Loam", "Well-drained Alluvial"],
+          "soil_ph": "6.0 - 8.0",
+          "water_requirement": "Medium (500-800 mm)",
+          "growing_period_days": 180,
+          "expected_yield_per_acre": "8-15 quintals",
+          "suitable_regions": ["Gujarat", "Maharashtra", "Andhra Pradesh", "Telangana", "Punjab"],
+          "key_varieties": ["Bt Cotton", "MCU-5", "Suraj", "LRA-5166"],
+          "fertilizer_requirement": "NPK 120:60:60 kg/hectare",
+          "key_diseases": ["Bollworm", "Pink Bollworm", "Leaf Curl Virus"],
+          "planting_tips": "Sow at 90x60 cm spacing. Thinning at 10-12 days. Avoid waterlogging.",
+          "advisory": "Bt cotton varieties provide resistance against bollworms. High-value cash crop."
+        },
+        {
+          "name": "Soybean",
+          "hindi_name": "Soyabean",
+          "soil_types": ["Loam", "Clay Loam", "Black Soil"],
+          "soil_ph": "6.0 - 7.5",
+          "water_requirement": "Medium (450-700 mm)",
+          "growing_period_days": 100,
+          "expected_yield_per_acre": "8-12 quintals",
+          "suitable_regions": ["Madhya Pradesh", "Maharashtra", "Rajasthan", "Karnataka"],
+          "key_varieties": ["JS 335", "MACS 450", "NRC 37", "KB 79"],
+          "fertilizer_requirement": "NPK 30:60:40 kg/hectare with rhizobium seed treatment",
+          "key_diseases": ["Yellow Mosaic Virus", "Rust", "Stem Fly"],
+          "planting_tips": "Row spacing 45 cm, plant spacing 5 cm. Inoculate seeds with rhizobium.",
+          "advisory": "Nitrogen-fixing crop. Improves soil fertility. Good option for crop rotation."
+        },
+        {
+          "name": "Groundnut",
+          "hindi_name": "Moongphali",
+          "soil_types": ["Sandy Loam", "Red Loam", "Well-drained Light Soil"],
+          "soil_ph": "6.0 - 7.0",
+          "water_requirement": "Low-Medium (400-500 mm)",
+          "growing_period_days": 125,
+          "expected_yield_per_acre": "10-15 quintals",
+          "suitable_regions": ["Gujarat", "Andhra Pradesh", "Tamil Nadu", "Karnataka", "Rajasthan"],
+          "key_varieties": ["TAG-24", "GG-20", "ICGS-44", "TG-51"],
+          "fertilizer_requirement": "NPK 20:60:40 kg/hectare with gypsum 400 kg/hectare at pegging",
+          "key_diseases": ["Tikka Leaf Spot", "Stem Rot", "Bud Necrosis"],
+          "planting_tips": "Sow at 30x10 cm spacing. Apply gypsum at peg formation stage.",
+          "advisory": "High-value oilseed crop. Requires well-drained soil to prevent pod rot."
+        }
+      ]
+    },
+    "Rabi": {
+      "description": "Rabi crops are sown in winter (October-November) and harvested in spring (March-April)",
+      "sowing_months": ["October", "November"],
+      "harvesting_months": ["March", "April"],
+      "crops": [
+        {
+          "name": "Wheat",
+          "hindi_name": "Gehun",
+          "soil_types": ["Loam", "Clay Loam", "Alluvial"],
+          "soil_ph": "6.0 - 7.5",
+          "water_requirement": "Medium (450-650 mm)",
+          "growing_period_days": 120,
+          "expected_yield_per_acre": "15-22 quintals",
+          "suitable_regions": ["Punjab", "Haryana", "Uttar Pradesh", "Madhya Pradesh", "Bihar"],
+          "key_varieties": ["HD-2967", "PBW-343", "GW-496", "K-0307"],
+          "fertilizer_requirement": "NPK 120:60:40 kg/hectare",
+          "key_diseases": ["Yellow Rust", "Brown Rust", "Loose Smut", "Powdery Mildew"],
+          "planting_tips": "Sow at 22.5 cm row spacing with 100 kg seed per hectare. First irrigation at crown root initiation (21 days).",
+          "advisory": "India's most important Rabi crop. Timely sowing (Oct 25 - Nov 10) gives best yield."
+        },
+        {
+          "name": "Mustard",
+          "hindi_name": "Sarson",
+          "soil_types": ["Sandy Loam", "Loam", "Medium Black Soil"],
+          "soil_ph": "6.0 - 7.5",
+          "water_requirement": "Low (250-400 mm)",
+          "growing_period_days": 110,
+          "expected_yield_per_acre": "6-9 quintals",
+          "suitable_regions": ["Rajasthan", "Haryana", "Uttar Pradesh", "Madhya Pradesh"],
+          "key_varieties": ["Varuna", "Rohini", "RH-30", "Pusa Bold"],
+          "fertilizer_requirement": "NPK 80:40:40 kg/hectare",
+          "key_diseases": ["Alternaria Blight", "White Rust", "Aphids"],
+          "planting_tips": "Sow at 30x10-15 cm spacing. Thinning at 15 days. Apply sulfur for quality improvement.",
+          "advisory": "Drought-tolerant oilseed crop. Excellent for dryland farming in north India."
+        },
+        {
+          "name": "Potato",
+          "hindi_name": "Aloo",
+          "soil_types": ["Sandy Loam", "Loam", "Well-drained Alluvial"],
+          "soil_ph": "5.5 - 6.5",
+          "water_requirement": "High (600-800 mm)",
+          "growing_period_days": 90,
+          "expected_yield_per_acre": "80-120 quintals",
+          "suitable_regions": ["Uttar Pradesh", "West Bengal", "Bihar", "Punjab", "Gujarat"],
+          "key_varieties": ["Kufri Jyoti", "Kufri Pukhraj", "Kufri Bahar", "Kufri Chandramukhi"],
+          "fertilizer_requirement": "NPK 180:120:180 kg/hectare",
+          "key_diseases": ["Late Blight", "Early Blight", "Black Scurf"],
+          "planting_tips": "Plant at 60x20 cm spacing. Earthing up at 30 and 60 days. Stop irrigation 2 weeks before harvest.",
+          "advisory": "High-value vegetable. Certified seed potato gives 20-30% higher yield."
+        },
+        {
+          "name": "Chickpea",
+          "hindi_name": "Chana",
+          "soil_types": ["Sandy Loam", "Loam", "Medium Black Soil"],
+          "soil_ph": "6.0 - 8.0",
+          "water_requirement": "Low (300-400 mm)",
+          "growing_period_days": 100,
+          "expected_yield_per_acre": "6-10 quintals",
+          "suitable_regions": ["Madhya Pradesh", "Rajasthan", "Maharashtra", "Andhra Pradesh", "Karnataka"],
+          "key_varieties": ["JG-11", "Vihar", "Annigeri-1", "KAK-2"],
+          "fertilizer_requirement": "NPK 20:50:30 kg/hectare with rhizobium seed treatment",
+          "key_diseases": ["Fusarium Wilt", "Botrytis Grey Mould", "Pod Borer"],
+          "planting_tips": "Sow at 30x10 cm spacing. Do not irrigate after flowering starts.",
+          "advisory": "Nitrogen-fixing legume. Drought-tolerant. Important pulse crop for central and south India."
+        },
+        {
+          "name": "Pea",
+          "hindi_name": "Matar",
+          "soil_types": ["Sandy Loam", "Loam", "Well-drained Soil"],
+          "soil_ph": "6.0 - 7.5",
+          "water_requirement": "Medium (350-500 mm)",
+          "growing_period_days": 70,
+          "expected_yield_per_acre": "25-40 quintals (green pods)",
+          "suitable_regions": ["Uttar Pradesh", "Madhya Pradesh", "Himachal Pradesh", "Punjab"],
+          "key_varieties": ["Arkel", "Azad Pea-1", "VL Matar 42", "HFP-715"],
+          "fertilizer_requirement": "NPK 40:60:40 kg/hectare",
+          "key_diseases": ["Powdery Mildew", "Root Rot", "Leaf Miner"],
+          "planting_tips": "Sow at 30x5 cm spacing. Provide support sticks for climbing varieties.",
+          "advisory": "Short duration vegetable. High market demand. Can be intercropped with wheat or mustard."
+        }
+      ]
+    },
+    "Zaid": {
+      "description": "Zaid crops are grown in summer (March-June) between Rabi and Kharif seasons",
+      "sowing_months": ["March", "April"],
+      "harvesting_months": ["May", "June", "July"],
+      "crops": [
+        {
+          "name": "Cucumber",
+          "hindi_name": "Kheera",
+          "soil_types": ["Sandy Loam", "Loam"],
+          "soil_ph": "6.0 - 7.0",
+          "water_requirement": "Medium (400-500 mm)",
+          "growing_period_days": 55,
+          "expected_yield_per_acre": "60-80 quintals",
+          "suitable_regions": ["Uttar Pradesh", "Bihar", "Rajasthan", "Punjab", "Haryana"],
+          "key_varieties": ["Poinsett", "Pusa Sanyog", "PCUK-1", "Malini"],
+          "fertilizer_requirement": "NPK 80:40:40 kg/hectare",
+          "key_diseases": ["Downy Mildew", "Powdery Mildew", "Cucumber Mosaic Virus"],
+          "planting_tips": "Sow 2-3 seeds per hill at 60x60 cm spacing. Provide trellis for climbing.",
+          "advisory": "High demand summer vegetable. Excellent for water body cultivation."
+        },
+        {
+          "name": "Watermelon",
+          "hindi_name": "Tarbooz",
+          "soil_types": ["Sandy Loam", "Loam", "Sandy"],
+          "soil_ph": "6.0 - 7.0",
+          "water_requirement": "Medium (400-600 mm)",
+          "growing_period_days": 80,
+          "expected_yield_per_acre": "80-150 quintals",
+          "suitable_regions": ["Rajasthan", "Madhya Pradesh", "Uttar Pradesh", "Karnataka"],
+          "key_varieties": ["Sugar Baby", "Arka Manik", "Pusa Bedana", "Madhuri"],
+          "fertilizer_requirement": "NPK 100:50:50 kg/hectare",
+          "key_diseases": ["Fruit Fly", "Downy Mildew", "Anthracnose"],
+          "planting_tips": "Sow at 2x1.5 m spacing on raised beds. Mulching helps retain moisture.",
+          "advisory": "Summer cash crop with excellent market demand. Ideal for sandy riverbed cultivation."
+        },
+        {
+          "name": "Bitter Gourd",
+          "hindi_name": "Karela",
+          "soil_types": ["Sandy Loam", "Loam"],
+          "soil_ph": "6.0 - 7.0",
+          "water_requirement": "Medium (400-500 mm)",
+          "growing_period_days": 60,
+          "expected_yield_per_acre": "30-50 quintals",
+          "suitable_regions": ["Bihar", "West Bengal", "Orissa", "Kerala", "Maharashtra"],
+          "key_varieties": ["Pusa Do Mausami", "Arka Harit", "Preethi", "Coimbatore Long"],
+          "fertilizer_requirement": "NPK 80:40:40 kg/hectare",
+          "key_diseases": ["Downy Mildew", "Fruit Fly", "Mosaic Virus"],
+          "planting_tips": "Sow 2-3 seeds per hill at 1.5x1 m spacing. Provide pandal for support.",
+          "advisory": "Medicinal vegetable with high nutritional value. Good market demand throughout summer."
+        }
+      ]
+    }
+  },
+  "soil_crop_mapping": {
+    "Black Soil": ["Cotton", "Soybean", "Wheat", "Jowar"],
+    "Alluvial Soil": ["Wheat", "Rice", "Sugarcane", "Potato", "Maize"],
+    "Red Soil": ["Groundnut", "Millets", "Pulses", "Cotton"],
+    "Sandy Soil": ["Groundnut", "Watermelon", "Cucumber", "Cumin"],
+    "Loamy Soil": ["Most vegetables", "Wheat", "Maize", "Soybean"],
+    "Clay Soil": ["Rice", "Sugarcane", "Jute"]
+  }
+}

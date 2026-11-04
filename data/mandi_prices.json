@@ -1,0 +1,108 @@
+{
+  "last_updated": "2024-01-15",
+  "date": "15 January 2024",
+  "unit": "INR per quintal (100 kg)",
+  "markets": {
+    "Delhi (Azadpur Mandi)": {
+      "state": "Delhi",
+      "commodities": {
+        "Tomato": { "min": 800, "max": 1400, "modal": 1100, "trend": "rising", "remarks": "Supply tight due to cold wave in growing regions" },
+        "Onion": { "min": 600, "max": 1000, "modal": 800, "trend": "stable", "remarks": "Good arrivals from Nashik. Stable prices." },
+        "Potato": { "min": 500, "max": 750, "modal": 620, "trend": "falling", "remarks": "Surplus supply from UP and Punjab" },
+        "Wheat": { "min": 2100, "max": 2300, "modal": 2215, "trend": "stable", "remarks": "Near MSP levels. Government procurement active." },
+        "Rice (Basmati)": { "min": 3200, "max": 4500, "modal": 3800, "trend": "rising", "remarks": "Export demand driving prices up" },
+        "Garlic": { "min": 3000, "max": 5000, "modal": 4000, "trend": "rising", "remarks": "Low arrivals. High demand in winter." },
+        "Cauliflower": { "min": 400, "max": 700, "modal": 550, "trend": "stable", "remarks": "Peak winter season. Good supply." },
+        "Peas": { "min": 1200, "max": 1800, "modal": 1500, "trend": "falling", "remarks": "Fresh arrivals increasing. Price softening." },
+        "Mustard": { "min": 4800, "max": 5200, "modal": 5050, "trend": "stable", "remarks": "Above MSP. Strong oil demand." },
+        "Maize": { "min": 1700, "max": 1900, "modal": 1800, "trend": "stable", "remarks": "Poultry feed demand steady" }
+      }
+    },
+    "Mumbai (APMC Vashi)": {
+      "state": "Maharashtra",
+      "commodities": {
+        "Tomato": { "min": 1000, "max": 1600, "modal": 1250, "trend": "rising", "remarks": "High demand in urban market. Limited supply." },
+        "Onion": { "min": 500, "max": 900, "modal": 700, "trend": "falling", "remarks": "New season arrivals from Nashik starting" },
+        "Potato": { "min": 600, "max": 900, "modal": 750, "trend": "stable", "remarks": "Cold storage stocks adequate" },
+        "Wheat": { "min": 2200, "max": 2500, "modal": 2350, "trend": "stable", "remarks": "Retail demand consistent" },
+        "Rice (Non-Basmati)": { "min": 1800, "max": 2400, "modal": 2100, "trend": "stable", "remarks": "Steady state-level procurement" },
+        "Garlic": { "min": 3500, "max": 5500, "modal": 4500, "trend": "rising", "remarks": "Festival demand boost" },
+        "Cauliflower": { "min": 500, "max": 900, "modal": 680, "trend": "stable", "remarks": "Winter crop in good supply" },
+        "Green Chilli": { "min": 2000, "max": 4000, "modal": 3000, "trend": "volatile", "remarks": "Price fluctuations due to irregular supply" },
+        "Groundnut": { "min": 4500, "max": 5500, "modal": 5000, "trend": "stable", "remarks": "Oil extraction demand steady" },
+        "Sugarcane": { "min": 285, "max": 295, "modal": 290, "trend": "stable", "remarks": "Government FRP rate applicable" }
+      }
+    },
+    "Lucknow (Aishbagh Mandi)": {
+      "state": "Uttar Pradesh",
+      "commodities": {
+        "Tomato": { "min": 700, "max": 1200, "modal": 950, "trend": "stable", "remarks": "Local production meeting demand" },
+        "Onion": { "min": 550, "max": 850, "modal": 700, "trend": "stable", "remarks": "Steady supply from Maharashtra and local" },
+        "Potato": { "min": 400, "max": 700, "modal": 550, "trend": "falling", "remarks": "Peak harvest season in UP. Oversupply." },
+        "Wheat": { "min": 2050, "max": 2200, "modal": 2150, "trend": "stable", "remarks": "Government procurement at MSP continues" },
+        "Rice (Common)": { "min": 1600, "max": 2000, "modal": 1800, "trend": "stable", "remarks": "Post-Kharif arrivals in market" },
+        "Mustard": { "min": 4900, "max": 5100, "modal": 5000, "trend": "rising", "remarks": "Rabi crop expected. Pre-season buying." },
+        "Peas": { "min": 900, "max": 1400, "modal": 1200, "trend": "falling", "remarks": "Winter peak supply driving prices down" },
+        "Garlic": { "min": 2800, "max": 4500, "modal": 3600, "trend": "stable", "remarks": "Adequate stocks in cold storage" },
+        "Sugarcane": { "min": 350, "max": 365, "modal": 360, "trend": "rising", "remarks": "UP government SAP above FRP this year" },
+        "Arhar Dal": { "min": 6500, "max": 7500, "modal": 7000, "trend": "rising", "remarks": "Below average kharif production. Prices firming." }
+      }
+    },
+    "Jaipur (Muhana Mandi)": {
+      "state": "Rajasthan",
+      "commodities": {
+        "Tomato": { "min": 800, "max": 1300, "modal": 1050, "trend": "stable", "remarks": "Good supply from local growing areas" },
+        "Onion": { "min": 600, "max": 950, "modal": 800, "trend": "rising", "remarks": "Off-season. Imports from Maharashtra." },
+        "Potato": { "min": 500, "max": 800, "modal": 640, "trend": "stable", "remarks": "Cold storage release maintaining supply" },
+        "Wheat": { "min": 2100, "max": 2300, "modal": 2200, "trend": "stable", "remarks": "MSP support price operative" },
+        "Mustard": { "min": 4800, "max": 5300, "modal": 5100, "trend": "rising", "remarks": "Strong demand from oil mills" },
+        "Cumin (Jeera)": { "min": 22000, "max": 28000, "modal": 25000, "trend": "rising", "remarks": "Strong export demand. High prices this year." },
+        "Coriander (Dhaniya)": { "min": 5500, "max": 7000, "modal": 6200, "trend": "stable", "remarks": "Good crop from Rajasthan this season" },
+        "Barley": { "min": 1400, "max": 1650, "modal": 1550, "trend": "stable", "remarks": "Steady demand from beer and cattle feed industry" },
+        "Groundnut": { "min": 4200, "max": 5200, "modal": 4700, "trend": "stable", "remarks": "Post-harvest arrivals. Prices normalizing." },
+        "Moong Dal": { "min": 7000, "max": 8500, "modal": 7800, "trend": "stable", "remarks": "Good kharif production this year" }
+      }
+    },
+    "Pune (Gultekdi Mandi)": {
+      "state": "Maharashtra",
+      "commodities": {
+        "Tomato": { "min": 900, "max": 1500, "modal": 1200, "trend": "rising", "remarks": "Short supply from key growing regions" },
+        "Onion": { "min": 450, "max": 800, "modal": 650, "trend": "falling", "remarks": "New kharif arrivals from Nashik belt" },
+        "Potato": { "min": 550, "max": 850, "modal": 700, "trend": "stable", "remarks": "Cold storage release adequate" },
+        "Grapes": { "min": 3000, "max": 6000, "modal": 4500, "trend": "rising", "remarks": "Thompson Seedless export season starting" },
+        "Pomegranate": { "min": 5000, "max": 9000, "modal": 7000, "trend": "stable", "remarks": "Bhagwa variety in peak quality season" },
+        "Sugarcane": { "min": 280, "max": 295, "modal": 290, "trend": "stable", "remarks": "Crushing season ongoing. Government FRP." },
+        "Cauliflower": { "min": 450, "max": 750, "modal": 600, "trend": "stable", "remarks": "Good winter crop availability" },
+        "Green Chilli": { "min": 2500, "max": 5000, "modal": 3500, "trend": "volatile", "remarks": "Weather impact on yield causing volatility" },
+        "Banana": { "min": 700, "max": 1200, "modal": 950, "trend": "stable", "remarks": "G9 variety available. Steady demand." },
+        "Brinjal": { "min": 600, "max": 1100, "modal": 800, "trend": "stable", "remarks": "Year-round availability. Good demand." }
+      }
+    }
+  },
+  "msps": {
+    "description": "Minimum Support Prices (MSP) declared by Government of India for 2023-24",
+    "crops": {
+      "Wheat": 2275,
+      "Paddy (Common)": 2183,
+      "Paddy (Grade A)": 2203,
+      "Maize": 2090,
+      "Bajra": 2500,
+      "Jowar (Hybrid)": 3180,
+      "Ragi": 3846,
+      "Arhar (Tur)": 7000,
+      "Moong": 8558,
+      "Urad": 6950,
+      "Groundnut": 6377,
+      "Sunflower": 6760,
+      "Soybean": 4600,
+      "Sesame": 8635,
+      "Mustard": 5650,
+      "Safflower": 5800,
+      "Cotton (Medium Staple)": 6620,
+      "Cotton (Long Staple)": 7020,
+      "Jute": 5050
+    },
+    "unit": "INR per quintal",
+    "note": "MSP is the minimum price guaranteed by government procurement agencies"
+  }
+}

@@ -1,0 +1,234 @@
+{
+  "last_updated": "2024-01-15",
+  "regions": [
+    {
+      "region_name": "Indo-Gangetic Plains",
+      "states": ["Punjab", "Haryana", "Uttar Pradesh", "Bihar"],
+      "soil_profiles": [
+        {
+          "soil_type": "Alluvial Soil",
+          "local_name": "Domat Mitti",
+          "texture": "Loamy to Sandy Loam",
+          "color": "Light grey to brown",
+          "ph_range": "7.0 - 8.5",
+          "organic_matter": "Low to Medium (0.3-0.8%)",
+          "major_nutrients": {
+            "Nitrogen": "Low (140-280 kg/ha)",
+            "Phosphorus": "Medium (12-22 kg/ha)",
+            "Potassium": "High (280-420 kg/ha)",
+            "Zinc": "Deficient in many areas",
+            "Sulfur": "Deficient in sandy soils"
+          },
+          "water_holding_capacity": "Medium",
+          "drainage": "Good to moderate",
+          "suitable_crops": ["Wheat", "Rice", "Sugarcane", "Potato", "Mustard", "Peas", "Maize"],
+          "limitations": ["Low organic matter", "Zinc deficiency common", "Prone to waterlogging in low-lying areas"],
+          "recommendations": [
+            "Add 10-15 tonnes FYM/ha before sowing",
+            "Apply zinc sulfate @ 25 kg/ha every 2-3 years",
+            "Adopt crop rotation with legumes",
+            "Apply green manure crops to increase organic matter"
+          ]
+        }
+      ]
+    },
+    {
+      "region_name": "Deccan Plateau",
+      "states": ["Maharashtra", "Karnataka", "Madhya Pradesh", "Andhra Pradesh"],
+      "soil_profiles": [
+        {
+          "soil_type": "Black Cotton Soil (Vertisols)",
+          "local_name": "Regur / Kali Mitti",
+          "texture": "Clay",
+          "color": "Deep black to dark grey",
+          "ph_range": "7.5 - 9.0",
+          "organic_matter": "Medium (0.5-1.2%)",
+          "major_nutrients": {
+            "Nitrogen": "Low to Medium (200-350 kg/ha)",
+            "Phosphorus": "Low (8-15 kg/ha)",
+            "Potassium": "Very High (400-600 kg/ha)",
+            "Calcium": "High",
+            "Sulfur": "Adequate",
+            "Zinc": "Marginally deficient"
+          },
+          "water_holding_capacity": "Very High",
+          "drainage": "Poor (shrinks and cracks when dry, becomes sticky and waterlogged when wet)",
+          "suitable_crops": ["Cotton", "Soybean", "Jowar", "Wheat", "Chickpea", "Safflower", "Sunflower"],
+          "limitations": [
+            "Difficult tillage when wet or dry",
+            "Waterlogging in monsoon",
+            "Low phosphorus availability",
+            "High alkalinity affects nutrient uptake"
+          ],
+          "recommendations": [
+            "Deep plowing (30-40 cm) in summer when dry",
+            "Apply gypsum @ 500 kg/ha to improve structure",
+            "Raised bed cultivation to prevent waterlogging",
+            "Apply phosphatic fertilizers in band placement",
+            "Grow cotton, soybean — best adapted crops"
+          ]
+        },
+        {
+          "soil_type": "Red Laterite Soil",
+          "local_name": "Tambdi Mitti",
+          "texture": "Sandy Clay Loam",
+          "color": "Red to yellowish-red",
+          "ph_range": "5.5 - 7.0",
+          "organic_matter": "Low (0.2-0.6%)",
+          "major_nutrients": {
+            "Nitrogen": "Low (120-200 kg/ha)",
+            "Phosphorus": "Very Low (5-10 kg/ha)",
+            "Potassium": "Medium (150-280 kg/ha)",
+            "Iron": "High (can cause toxicity in rice)",
+            "Manganese": "High",
+            "Calcium": "Low",
+            "Boron": "Deficient"
+          },
+          "water_holding_capacity": "Low",
+          "drainage": "Excessive",
+          "suitable_crops": ["Groundnut", "Millets (Jowar/Bajra)", "Pulses", "Cashew", "Mango", "Tapioca"],
+          "limitations": [
+            "Low fertility and organic matter",
+            "High fixation of phosphorus",
+            "Rapid leaching of nutrients",
+            "Drought prone"
+          ],
+          "recommendations": [
+            "Apply heavy doses of FYM/compost (15-20 tonnes/ha)",
+            "Use split application of fertilizers to reduce leaching",
+            "Grow legumes in rotation to fix nitrogen",
+            "Apply lime @ 500-1000 kg/ha in very acidic areas",
+            "Mulching to conserve moisture"
+          ]
+        }
+      ]
+    },
+    {
+      "region_name": "Rajasthan Desert Region",
+      "states": ["Rajasthan"],
+      "soil_profiles": [
+        {
+          "soil_type": "Desert Sandy Soil (Aridisols)",
+          "local_name": "Balui Mitti / Retili Mitti",
+          "texture": "Coarse Sandy",
+          "color": "Light yellow to pale brown",
+          "ph_range": "7.5 - 8.5",
+          "organic_matter": "Very Low (0.1-0.3%)",
+          "major_nutrients": {
+            "Nitrogen": "Very Low (80-120 kg/ha)",
+            "Phosphorus": "Low (6-12 kg/ha)",
+            "Potassium": "Medium (180-300 kg/ha)",
+            "Zinc": "Deficient",
+            "Iron": "Deficient",
+            "Manganese": "Deficient"
+          },
+          "water_holding_capacity": "Very Low",
+          "drainage": "Excessive",
+          "suitable_crops": ["Bajra (Pearl Millet)", "Groundnut", "Moth Bean", "Cluster Bean (Guar)", "Cumin", "Mustard"],
+          "limitations": [
+            "Very low fertility",
+            "Very high water stress",
+            "Wind erosion",
+            "Saline and alkaline in some areas"
+          ],
+          "recommendations": [
+            "Drip irrigation is mandatory for vegetables",
+            "Apply heavy doses of FYM/compost",
+            "Wind breaks and shelter belts to prevent erosion",
+            "Grow drought-tolerant varieties",
+            "Micronutrient spray (zinc, iron) as foliar application"
+          ]
+        }
+      ]
+    },
+    {
+      "region_name": "Kerala and Coastal South India",
+      "states": ["Kerala", "Tamil Nadu Coast", "Goa"],
+      "soil_profiles": [
+        {
+          "soil_type": "Laterite Soil",
+          "local_name": "Laterite",
+          "texture": "Clay Loam to Clay",
+          "color": "Red to orange-red",
+          "ph_range": "4.5 - 6.0",
+          "organic_matter": "Medium (0.8-1.5%)",
+          "major_nutrients": {
+            "Nitrogen": "Medium (180-280 kg/ha)",
+            "Phosphorus": "Low to Medium (10-18 kg/ha)",
+            "Potassium": "Low (120-200 kg/ha)",
+            "Calcium": "Low",
+            "Magnesium": "Low",
+            "Boron": "Deficient"
+          },
+          "water_holding_capacity": "Medium",
+          "drainage": "Good",
+          "suitable_crops": ["Coconut", "Arecanut", "Rubber", "Tea", "Coffee", "Banana", "Pineapple", "Tapioca"],
+          "limitations": [
+            "High acidity",
+            "Phosphorus fixation",
+            "Aluminum and manganese toxicity at very low pH",
+            "Nutrient leaching under high rainfall"
+          ],
+          "recommendations": [
+            "Apply lime @ 500-2000 kg/ha based on pH",
+            "Use acid-tolerant crop varieties",
+            "Apply borax @ 10 kg/ha for boron deficiency",
+            "Organic matter addition essential",
+            "Contour bunding to prevent erosion"
+          ]
+        }
+      ]
+    },
+    {
+      "region_name": "Eastern India",
+      "states": ["West Bengal", "Assam", "Orissa"],
+      "soil_profiles": [
+        {
+          "soil_type": "Deltaic Alluvial Soil",
+          "local_name": "Kari Mitti / Diara",
+          "texture": "Clay Loam to Silty Clay",
+          "color": "Dark grey to black",
+          "ph_range": "5.5 - 7.5",
+          "organic_matter": "Medium to High (0.8-2.0%)",
+          "major_nutrients": {
+            "Nitrogen": "Medium to High (220-400 kg/ha)",
+            "Phosphorus": "Medium (12-20 kg/ha)",
+            "Potassium": "High (300-500 kg/ha)",
+            "Zinc": "Deficient in many areas",
+            "Sulfur": "Marginally adequate"
+          },
+          "water_holding_capacity": "High",
+          "drainage": "Poor to moderate",
+          "suitable_crops": ["Rice (multiple crops)", "Jute", "Mustard", "Potato", "Vegetables", "Banana"],
+          "limitations": [
+            "Frequent flooding",
+            "Waterlogging",
+            "Zinc deficiency",
+            "Acidity in some areas"
+          ],
+          "recommendations": [
+            "Bunded fields for paddy cultivation",
+            "Apply zinc sulfate @ 25 kg/ha",
+            "Grow flood-tolerant rice varieties (Swarna Sub1)",
+            "Multiple cropping system for maximum income",
+            "Green manuring with dhaincha (Sesbania)"
+          ]
+        }
+      ]
+    }
+  ],
+  "soil_health_indicators": {
+    "ideal_ph_ranges": {
+      "Most crops": "6.0 - 7.0",
+      "Acidic soil crops (Tea, Coffee, Blueberry)": "4.5 - 5.5",
+      "Alkaline tolerant (Barley, Cotton)": "7.0 - 8.5"
+    },
+    "organic_matter_guidelines": {
+      "Very Low": "< 0.5% — Critical. Apply 15-20 tonnes FYM/ha urgently",
+      "Low": "0.5-1.0% — Apply 10-15 tonnes FYM/ha + crop rotation with legumes",
+      "Medium": "1.0-2.0% — Apply 5-10 tonnes FYM/ha. Maintain with green manuring",
+      "High": "> 2.0% — Excellent. Maintain with minimum tillage practices"
+    },
+    "soil_testing_advice": "Get soil tested every 3 years through Soil Health Card scheme (Government of India). Contact your nearest KVK (Krishi Vigyan Kendra)."
+  }
+}
