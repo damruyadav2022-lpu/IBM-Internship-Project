@@ -361,6 +361,24 @@ if "voice_chat_history" not in st.session_state: st.session_state.voice_chat_his
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+def safe_int(val, default: int = 0) -> int:
+    try:
+        return int(float(val))
+    except (ValueError, TypeError):
+        return default
+
+def safe_float(val, default: float = 0.0) -> float:
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return default
+
+def safe_clamp(val, low: float = 0.0, high: float = 1.0) -> float:
+    try:
+        return min(high, max(low, float(val)))
+    except (ValueError, TypeError):
+        return low
+
 @st.cache_data(ttl=300)
 def load_json(filename: str) -> dict:
     path = DATA_DIR / filename
@@ -373,7 +391,7 @@ def load_json(filename: str) -> dict:
 def get_realtime_weather(location: str) -> dict:
     """Fetch real-time weather from backend API or local WeatherService."""
     try:
-        r = requests.get(f"{API_URL}/weather", params={"location": location}, timeout=5)
+        r = requests.get(f"{API_URL}/weather", params={"location": location}, timeout=8)
         if r.status_code == 200:
             return r.json()
     except Exception:
@@ -389,7 +407,7 @@ def get_realtime_weather(location: str) -> dict:
 def get_realtime_mandi() -> dict:
     """Fetch real-time Mandi APMC prices from backend API or local MandiService."""
     try:
-        r = requests.get(f"{API_URL}/mandi-prices", timeout=6)
+        r = requests.get(f"{API_URL}/mandi-prices", timeout=8)
         if r.status_code == 200:
             return r.json()
     except Exception:
@@ -408,7 +426,7 @@ def get_climate_risk(location: str, crop: str = "wheat", stage: str = None) -> d
         params = {"location": location, "crop": crop}
         if stage:
             params["stage"] = stage
-        r = requests.get(f"{API_URL}/climate-risk", params=params, timeout=8)
+        r = requests.get(f"{API_URL}/climate-risk", params=params, timeout=10)
         if r.status_code == 200:
             return r.json()
     except Exception:
@@ -430,11 +448,16 @@ def call_chat(message: str, language: str, location: str) -> dict:
         r.raise_for_status()
         return r.json()
     except requests.exceptions.ConnectionError:
-        return {
-            "response": "⚠️ Backend service is reconnecting. Please ensure Uvicorn backend is running on port 8000.",
-            "sources": [],
-            "agent_steps": [],
-        }
+        try:
+            sys.path.insert(0, str(ROOT / "backend"))
+            from agent.farming_agent import run_agent
+            return run_agent(message, language=language, location=location)
+        except Exception:
+            return {
+                "response": "⚠️ Backend service is reconnecting. Please ensure Uvicorn backend is running on port 8000.",
+                "sources": [],
+                "agent_steps": [],
+            }
     except Exception as e:
         return {"response": f"⚠️ Error: {str(e)}", "sources": [], "agent_steps": []}
 
@@ -567,7 +590,7 @@ with st.sidebar:
             st.markdown(
                 f"<div style='display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:4px;color:#f1f5f9;'>"
                 f"<span>{crop}</span>"
-                f"<b>₹{prices['modal']:,}/q <span class='{color}'>{icon}</span></b>"
+                f"<b>₹{safe_int(prices.get('modal', 0)):,}/q <span class='{color}'>{icon}</span></b>"
                 f"</div>",
                 unsafe_allow_html=True,
             )
@@ -683,7 +706,7 @@ with tab_chat:
     active_questions = quick_qs.get(st.session_state.language, quick_qs["English"])
     for i, q in enumerate(active_questions):
         with cols[i % 3]:
-            if st.button(q, use_container_width=True, key=f"quick_btn_{i}"):
+            if st.button(q, width="stretch", key=f"quick_btn_{i}"):
                 st.session_state.messages.append({"role": "user", "content": q})
                 with st.spinner("KrishiRakshak reasoning with real-time tools..." if not is_hindi else "कृषि रक्षक वास्तविक समय सलाह तैयार कर रहा है..."):
                     result = call_chat(q, st.session_state.language, st.session_state.location)
@@ -742,7 +765,7 @@ with tab_chat:
             placeholder="Type your question in English, हिन्दी, or ਪੰਜਾਬੀ... (e.g. Best fertilizer for wheat?)",
             label_visibility="collapsed",
         )
-        submit_chat = c_btn.form_submit_button("Send 🚀", use_container_width=True)
+        submit_chat = c_btn.form_submit_button("Send 🚀", width="stretch")
 
     if submit_chat and user_input.strip():
         st.session_state.messages.append({"role": "user", "content": user_input})
@@ -758,7 +781,7 @@ with tab_chat:
 
     c_c1, c_c2 = st.columns([4, 1])
     with c_c2:
-        if st.button("🗑️ Clear Conversation", use_container_width=True):
+        if st.button("🗑️ Clear Conversation", width="stretch"):
             st.session_state.messages = []
             st.rerun()
 
@@ -839,10 +862,10 @@ with tab_voice:
                 ]
 
             for s in presets:
-                if st.button(s, use_container_width=True, key=f"voice_preset_{s[:18]}"):
+                if st.button(s, width="stretch", key=f"voice_preset_{s[:18]}"):
                     preset_spoken_text = s.split(" ", 1)[-1]
 
-        process_voice = st.button("🚀 Process Voice Advice", type="primary", use_container_width=True)
+        process_voice = st.button("🚀 Process Voice Advice", type="primary", width="stretch")
 
     with col_v2:
         st.markdown("#### 🎧 Spoken Diagnosis & Voice Output")
@@ -956,7 +979,7 @@ with tab_risk:
 
     with col_r4:
         st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-        if st.button("🔄 Analyze Risk", use_container_width=True, key="risk_refresh_btn"):
+        if st.button("🔄 Analyze Risk", width="stretch", key="risk_refresh_btn"):
             get_climate_risk.clear()
             st.rerun()
 
@@ -1050,7 +1073,7 @@ with tab_risk:
                 f'</div>',
                 unsafe_allow_html=True,
             )
-            st.progress(drought_info.get("score", 0) / 100.0)
+            st.progress(safe_clamp(drought_info.get("score", 0) / 100.0))
 
         flood_info = scores.get("flood_risk", {})
         with rk_col2:
@@ -1062,7 +1085,7 @@ with tab_risk:
                 f'</div>',
                 unsafe_allow_html=True,
             )
-            st.progress(flood_info.get("score", 0) / 100.0)
+            st.progress(safe_clamp(flood_info.get("score", 0) / 100.0))
 
         heat_info = scores.get("heat_stress", {})
         with rk_col3:
@@ -1074,7 +1097,7 @@ with tab_risk:
                 f'</div>',
                 unsafe_allow_html=True,
             )
-            st.progress(heat_info.get("score", 0) / 100.0)
+            st.progress(safe_clamp(heat_info.get("score", 0) / 100.0))
 
         rk_col4, rk_col5, rk_col6 = st.columns(3)
 
@@ -1088,7 +1111,7 @@ with tab_risk:
                 f'</div>',
                 unsafe_allow_html=True,
             )
-            st.progress(frost_info.get("score", 0) / 100.0)
+            st.progress(safe_clamp(frost_info.get("score", 0) / 100.0))
 
         lodging_info = scores.get("lodging_risk", {})
         with rk_col5:
@@ -1100,7 +1123,7 @@ with tab_risk:
                 f'</div>',
                 unsafe_allow_html=True,
             )
-            st.progress(lodging_info.get("score", 0) / 100.0)
+            st.progress(safe_clamp(lodging_info.get("score", 0) / 100.0))
 
         fungal_info = scores.get("fungal_disease_risk", {})
         with rk_col6:
@@ -1112,7 +1135,7 @@ with tab_risk:
                 f'</div>',
                 unsafe_allow_html=True,
             )
-            st.progress(fungal_info.get("score", 0) / 100.0)
+            st.progress(safe_clamp(fungal_info.get("score", 0) / 100.0))
 
         st.divider()
 
@@ -1148,7 +1171,7 @@ with tab_risk:
                     "min_temp": "Min Temp (°C)",
                     "rainfall": "Rainfall (mm)",
                 }, inplace=True)
-                st.dataframe(df_time, use_container_width=True, hide_index=True)
+                st.dataframe(df_time, width="stretch", hide_index=True)
 
 
 # ════════════════════════════════════════════════════════════════════════
@@ -1228,9 +1251,9 @@ with tab_disease:
                 st.warning("Sample image not found on disk.")
 
         if chosen_leaf_img:
-            st.image(chosen_leaf_img, caption=f"Active Sample: {leaf_file_name}", use_container_width=True)
+            st.image(chosen_leaf_img, caption=f"Active Sample: {leaf_file_name}", width="stretch")
 
-            if st.button("🔬 Analyze Leaf & Diagnose Pathology", type="primary", use_container_width=True):
+            if st.button("🔬 Analyze Leaf & Diagnose Pathology", type="primary", width="stretch"):
                 with st.spinner("Executing YOLOv8 neural network inference..."):
                     buffer = io.BytesIO()
                     chosen_leaf_img.convert("RGB").save(buffer, format="JPEG", quality=95)
@@ -1276,7 +1299,7 @@ with tab_disease:
                     if d.get("hindi_name"):
                         st.markdown(f"**हिंदी नाम:** `{d['hindi_name']}`")
 
-                    st.progress(d["confidence"], text=f"Model Confidence: {conf_pct:.1f}%")
+                    st.progress(safe_clamp(d.get("confidence", 0)), text=f"Model Confidence: {conf_pct:.1f}%")
 
                     sev_bg = SEVERITY_COLOR.get(sev, "#f3f4f6")
                     st.markdown(
@@ -1321,7 +1344,7 @@ with tab_weather:
         )
     with col_search2:
         st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-        if st.button("🔄 Refresh Live Weather", use_container_width=True):
+        if st.button("🔄 Refresh Live Weather", width="stretch"):
             get_realtime_weather.clear()
             st.rerun()
 
@@ -1358,7 +1381,11 @@ with tab_weather:
         w1.metric("💧 Relative Humidity", f"{curr.get('humidity', '--')}%")
         w2.metric("💨 Wind Velocity", f"{curr.get('wind_speed', '--')} km/h")
         w3.metric("🌧️ Current Rainfall", f"{curr.get('precipitation', 0.0)} mm")
-        w4.metric("🌡️ 24h Temperature Range", f"{forecasts[0]['temperature']['min']}–{forecasts[0]['temperature']['max']}°C" if forecasts else "--")
+        
+        t0 = forecasts[0].get("temperature", {}) if forecasts else {}
+        t0_min = t0.get("min", "--") if isinstance(t0, dict) else t0
+        t0_max = t0.get("max", "--") if isinstance(t0, dict) else t0
+        w4.metric("🌡️ 24h Temperature Range", f"{t0_min}–{t0_max}°C" if forecasts else "--")
 
         today_adv = curr.get("advisory", "")
         if today_adv:
@@ -1374,6 +1401,9 @@ with tab_weather:
             icon = f.get("icon", "🌤️")
             rain_mm = f.get("rainfall", 0)
             rain_prob = f.get("rain_probability", 0)
+            t_day = f.get("temperature", {})
+            t_min = t_day.get("min", "--") if isinstance(t_day, dict) else t_day
+            t_max = t_day.get("max", "--") if isinstance(t_day, dict) else t_day
             with col:
                 st.markdown(
                     f'<div class="weather-card-modern">'
@@ -1381,7 +1411,7 @@ with tab_weather:
                     f'<small style="color:#94a3b8;">{f.get("date","")}</small><br>'
                     f'<span style="font-size:1.6rem;">{icon}</span><br>'
                     f'<small style="font-weight:600;color:#f1f5f9;">{cond}</small><br>'
-                    f'<b style="color:#ffffff;">{f["temperature"]["min"]}–{f["temperature"]["max"]}°C</b><br>'
+                    f'<b style="color:#ffffff;">{t_min}–{t_max}°C</b><br>'
                     f'<small style="color:#34d399;">💧 {f.get("humidity","")}%</small><br>'
                     f'<small style="color:#38bdf8;">🌧️ {rain_mm}mm ({rain_prob}%)</small><br>'
                     f'<small style="color:#94a3b8;">💨 {f.get("wind_speed",0)}km/h</small>'
@@ -1415,7 +1445,7 @@ with tab_market:
 
     col_mk1, col_mk2 = st.columns([3, 1])
     with col_mk2:
-        if st.button("🔄 Refresh Live APMC Rates", use_container_width=True):
+        if st.button("🔄 Refresh Live APMC Rates", width="stretch"):
             get_realtime_mandi.clear()
             st.rerun()
 
@@ -1468,19 +1498,21 @@ with tab_market:
             for crop, p in filtered.items():
                 trend = p.get("trend", "stable")
                 t_symbol = "↑" if trend == "rising" else ("↓" if trend == "falling" else "→")
-                modal_val = p.get("modal", 0)
+                modal_val = safe_int(p.get("modal", 0))
+                min_val = safe_int(p.get("min", 0))
+                max_val = safe_int(p.get("max", 0))
                 table_rows.append({
                     "Commodity": crop,
-                    "Min Price (₹/q)": f"₹{p['min']:,}",
+                    "Min Price (₹/q)": f"₹{min_val:,}",
                     "Modal Rate (₹/q)": f"₹{modal_val:,}",
                     "Retail Approx (₹/kg)": f"₹{modal_val/100:.1f}/kg",
-                    "Max Price (₹/q)": f"₹{p['max']:,}",
+                    "Max Price (₹/q)": f"₹{max_val:,}",
                     "Daily Trend": f"{t_symbol} {trend.title()}",
                     "Arrivals & Market Remarks": p.get("remarks", ""),
                 })
 
             df_mandi = pd.DataFrame(table_rows)
-            st.dataframe(df_mandi, use_container_width=True, hide_index=True)
+            st.dataframe(df_mandi, width="stretch", hide_index=True)
 
         else:
             st.info(f"No commodities found matching '{crop_search}' at {chosen_mkt}.")
@@ -1493,10 +1525,11 @@ with tab_market:
             msp_cols = st.columns(3)
             for i, (crop, msp_info) in enumerate(msp_dict.items()):
                 with msp_cols[i % 3]:
+                    msp_val = safe_int(msp_info.get("msp", 0))
                     st.markdown(
                         f'<div class="stat-box-modern">'
                         f'<b style="font-size:1.05rem;">{crop}</b><br>'
-                        f'<span class="mandi-price" style="font-size:1.3rem;">₹{msp_info["msp"]:,}/quintal</span><br>'
+                        f'<span class="mandi-price" style="font-size:1.3rem;">₹{msp_val:,}/quintal</span><br>'
                         f'<small style="color:#94a3b8;">{msp_info.get("season","")} • {msp_info.get("remarks","")}</small>'
                         f'</div>',
                         unsafe_allow_html=True,

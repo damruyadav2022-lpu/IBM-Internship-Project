@@ -40,3 +40,4 @@ package-lock.json
 
 # Streamlit runtime state
 .streamlit/secrets.toml
+
