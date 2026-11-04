@@ -23,22 +23,64 @@ if _ENV_FILE.exists():
     load_dotenv(_ENV_FILE, override=True)
 
 
+def _resolve_config():
+    """Resolve LLM credentials across os.environ, Streamlit session_state, and Streamlit secrets."""
+    provider = os.getenv("LLM_PROVIDER", "openai").lower()
+    api_key = os.getenv("LLM_API_KEY", "").strip()
+    model = os.getenv("LLM_MODEL", "openai/gpt-oss-120b").strip()
+    base_url = os.getenv("LLM_BASE_URL", "").strip() or None
+
+    # Check Streamlit environment if running inside Streamlit
+    try:
+        import streamlit as st
+        # 1. User entered key in sidebar UI
+        if hasattr(st, "session_state") and st.session_state.get("user_groq_api_key"):
+            api_key = st.session_state.user_groq_api_key.strip()
+            os.environ["LLM_API_KEY"] = api_key
+
+        # 2. Key stored in Streamlit Cloud Secrets
+        if (not api_key or api_key == "sk-placeholder") and hasattr(st, "secrets"):
+            if "LLM_API_KEY" in st.secrets:
+                api_key = str(st.secrets["LLM_API_KEY"]).strip()
+                os.environ["LLM_API_KEY"] = api_key
+            elif "GROQ_API_KEY" in st.secrets:
+                api_key = str(st.secrets["GROQ_API_KEY"]).strip()
+                os.environ["LLM_API_KEY"] = api_key
+
+            if not base_url and "LLM_BASE_URL" in st.secrets:
+                base_url = str(st.secrets["LLM_BASE_URL"]).strip()
+                os.environ["LLM_BASE_URL"] = base_url
+            if "LLM_MODEL" in st.secrets:
+                model = str(st.secrets["LLM_MODEL"]).strip()
+                os.environ["LLM_MODEL"] = model
+    except Exception:
+        pass
+
+    # Ensure Groq endpoint is used by default or whenever key is a Groq key (starts with gsk_)
+    if not base_url or api_key.startswith("gsk_") or "120b" in model.lower() or "llama" in model.lower():
+        if not base_url or "openai.com/v1" in base_url and not base_url.startswith("https://api.groq"):
+            base_url = "https://api.groq.com/openai/v1"
+            os.environ["LLM_BASE_URL"] = base_url
+
+    temperature = float(os.getenv("LLM_TEMPERATURE", "0.3"))
+    max_tokens = int(os.getenv("LLM_MAX_TOKENS", "1024"))
+
+    return provider, api_key, model, base_url, temperature, max_tokens
+
+
 def get_llm() -> BaseLanguageModel:
     """
     Instantiate and return an LLM based on environment configuration.
-    Supports any OpenAI-compatible endpoint (OpenAI, Groq, Ollama, HuggingFace TGI,
-    LM Studio, Together AI, etc.) via the openai-compatible client.
+    Supports any OpenAI-compatible endpoint (Groq, OpenAI, Ollama, HuggingFace TGI).
     """
-    # Re-read .env to catch any live updates without requiring full restart
+    # Re-read .env if present
     if _ENV_FILE.exists():
-        load_dotenv(_ENV_FILE, override=True)
+        load_dotenv(_ENV_FILE, override=False)
 
-    provider = os.getenv("LLM_PROVIDER", "openai").lower()
-    api_key = os.getenv("LLM_API_KEY", "sk-placeholder")
-    model = os.getenv("LLM_MODEL", "openai/gpt-oss-120b")
-    base_url = os.getenv("LLM_BASE_URL", None)
-    temperature = float(os.getenv("LLM_TEMPERATURE", "0.3"))
-    max_tokens = int(os.getenv("LLM_MAX_TOKENS", "1024"))
+    provider, api_key, model, base_url, temperature, max_tokens = _resolve_config()
+
+    if not api_key or api_key == "sk-placeholder":
+        raise ValueError("API_KEY_NOT_CONFIGURED")
 
     logger.info(f"Initializing LLM: provider={provider}, model={model}, base_url={base_url}")
 
@@ -66,7 +108,7 @@ def get_llm() -> BaseLanguageModel:
             max_tokens=max_tokens,
         )
 
-    # Default: OpenAI or any generic OpenAI-compatible API (e.g. Groq)
+    # Default: OpenAI or Groq via ChatOpenAI
     kwargs: dict = dict(
         model=model,
         openai_api_key=api_key,

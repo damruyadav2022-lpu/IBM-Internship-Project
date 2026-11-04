@@ -26,14 +26,22 @@ st.set_page_config(
 # Automatically propagate Streamlit Community Cloud Secrets into os.environ
 try:
     for _k, _v in st.secrets.items():
-        if isinstance(_v, str) and _k not in os.environ:
+        if isinstance(_v, str):
             os.environ[_k] = _v
+            if _k.upper() in ("GROQ_API_KEY", "GROQ_KEY"):
+                os.environ["LLM_API_KEY"] = _v
         elif isinstance(_v, dict):
             for _sub_k, _sub_v in _v.items():
-                if isinstance(_sub_v, str) and _sub_k not in os.environ:
+                if isinstance(_sub_v, str):
                     os.environ[_sub_k] = _sub_v
+                    if _sub_k.upper() in ("GROQ_API_KEY", "GROQ_KEY"):
+                        os.environ["LLM_API_KEY"] = _sub_v
 except Exception:
     pass
+
+# Ensure LLM_BASE_URL defaults to Groq (never unconfigured or defaulting to OpenAI)
+if not os.getenv("LLM_BASE_URL") or "openai.com/v1" in os.getenv("LLM_BASE_URL", ""):
+    os.environ["LLM_BASE_URL"] = "https://api.groq.com/openai/v1"
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 ROOT = Path(__file__).parent
@@ -576,6 +584,33 @@ with st.sidebar:
         index=CITIES.index(st.session_state.location) if st.session_state.location in CITIES else 0,
         label_visibility="collapsed",
     )
+
+    # ── Groq API Key Manager ──────────────────────────────────────────
+    cur_key = os.getenv("LLM_API_KEY", "").strip()
+    has_active_key = bool(cur_key and not cur_key.startswith("sk-placeholder") and len(cur_key) > 10)
+
+    with st.expander("🔑 AI API Key Settings", expanded=not has_active_key):
+        if has_active_key:
+            st.caption(f"Status: **🟢 Key Active** (`{cur_key[:6]}...{cur_key[-4:]}`)")
+        else:
+            st.warning("Groq API key required for AI reasoning and voice queries.")
+
+        key_input = st.text_input(
+            "Groq API Key:",
+            type="password",
+            placeholder="gsk_...",
+            key="input_groq_key_sidebar",
+            help="Get a free Groq API key at https://console.groq.com/keys"
+        )
+        if st.button("💾 Save Key", width="stretch", key="save_groq_key_btn"):
+            if key_input.strip():
+                st.session_state.user_groq_api_key = key_input.strip()
+                os.environ["LLM_API_KEY"] = key_input.strip()
+                os.environ["LLM_BASE_URL"] = "https://api.groq.com/openai/v1"
+                st.success("API Key saved!")
+                st.rerun()
+
+        st.caption("[Get a free Groq Key in 30 seconds →](https://console.groq.com/keys)")
 
     st.divider()
 

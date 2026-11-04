@@ -20,10 +20,24 @@ load_dotenv()
 
 
 def _get_whisper_client() -> OpenAI:
-    """Return OpenAI client configured for Groq."""
-    load_dotenv(override=True)
-    api_key = os.getenv("LLM_API_KEY", "")
-    base_url = os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1")
+    """Return OpenAI client configured for Groq Whisper."""
+    load_dotenv(override=False)
+    api_key = os.getenv("LLM_API_KEY", "").strip()
+    base_url = os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1").strip()
+
+    # Check Streamlit environment if running inside Streamlit
+    try:
+        import streamlit as st
+        if hasattr(st, "session_state") and st.session_state.get("user_groq_api_key"):
+            api_key = st.session_state.user_groq_api_key.strip()
+        elif hasattr(st, "secrets"):
+            if "LLM_API_KEY" in st.secrets:
+                api_key = str(st.secrets["LLM_API_KEY"]).strip()
+            elif "GROQ_API_KEY" in st.secrets:
+                api_key = str(st.secrets["GROQ_API_KEY"]).strip()
+    except Exception:
+        pass
+
     return OpenAI(api_key=api_key, base_url=base_url)
 
 

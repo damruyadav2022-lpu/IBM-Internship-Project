@@ -4,7 +4,15 @@ High-performance agricultural advice agent with multi-language support (English 
 Uses direct domain-tool routing + RAG retrieval + Groq LLM for sub-second responses.
 """
 import logging
+import os
+import sys
+from pathlib import Path
 from typing import Any, Dict, List
+
+# Ensure backend directory is in sys.path for robust standalone/Streamlit execution
+_BACKEND_DIR = str(Path(__file__).parent.parent.resolve())
+if _BACKEND_DIR not in sys.path:
+    sys.path.insert(0, _BACKEND_DIR)
 
 from langchain_core.tools import Tool
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -72,7 +80,11 @@ def run_agent(
     Run the KrishiRakshak agent and return a structured response.
     Routes queries to domain tools with sub-second synthesis.
     """
-    llm = get_llm()
+    llm = None
+    try:
+        llm = get_llm()
+    except Exception as ex:
+        logger.warning(f"LLM client setup notice: {ex}")
     lang_clean = language.lower()
     if lang_clean in ("hindi", "hi"):
         system_prompt = SYSTEM_PROMPT_HI
@@ -189,23 +201,41 @@ def run_agent(
         f"3. Keep the tone encouraging, helpful, and respectful to farmers."
     )
 
-    try:
-        response = llm.invoke([
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=full_prompt),
-        ])
-        return {
-            "response": response.content,
-            "sources": sources,
-            "agent_steps": agent_steps,
-        }
-    except Exception as e:
-        logger.error(f"LLM synthesis error: {e}")
+    if llm is not None:
+        try:
+            response = llm.invoke([
+                SystemMessage(content=system_prompt),
+                HumanMessage(content=full_prompt),
+            ])
+            return {
+                "response": response.content,
+                "sources": sources,
+                "agent_steps": agent_steps,
+            }
+        except Exception as e:
+            logger.error(f"LLM synthesis error: {e}")
+
+    # Graceful fallback: return verified domain tool telemetry directly
+    if tool_outputs:
+        retrieved_data = "\n\n".join(tool_outputs)
         return {
             "response": (
-                f"I'm sorry, I couldn't process your question right now. "
-                f"Please ensure LLM_API_KEY is configured in Streamlit Cloud Secrets (or .env).\nError: {e}"
+                f"🌾 **Verified Agricultural Data & Real-Time Advisory:**\n\n"
+                f"{retrieved_data}\n\n"
+                f"---\n"
+                f"💡 *Tip: To enable conversational multi-lingual AI explanations in Hindi or Punjabi, please enter your free Groq API key in the sidebar (or add `LLM_API_KEY` in Streamlit Cloud Secrets).* [Get free key →](https://console.groq.com/keys)"
             ),
             "sources": sources,
             "agent_steps": agent_steps,
         }
+
+    return {
+        "response": (
+            "⚠️ **Groq API Key Required for AI Synthesis**\n\n"
+            "To ask custom questions, please enter your free Groq API key in the sidebar on the left.\n\n"
+            "👉 [Get a free Groq API Key at console.groq.com/keys](https://console.groq.com/keys)\n\n"
+            "*If you deployed on Streamlit Cloud, add `LLM_API_KEY = \"gsk_...\"` in App Settings → Secrets.*"
+        ),
+        "sources": sources,
+        "agent_steps": agent_steps,
+    }
