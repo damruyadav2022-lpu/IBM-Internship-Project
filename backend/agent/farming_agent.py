@@ -204,7 +204,7 @@ def run_agent(
         return {
             "response": (
                 f"I'm sorry, I couldn't process your question right now. "
-                f"Please check your LLM API configuration in .env.\nError: {e}"
+                f"Please ensure LLM_API_KEY is configured in Streamlit Cloud Secrets (or .env).\nError: {e}"
             ),
             "sources": sources,
             "agent_steps": agent_steps,

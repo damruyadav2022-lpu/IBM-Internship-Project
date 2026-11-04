@@ -37,6 +37,10 @@ def transcribe_audio(
     Supports Hindi ('hi'), Punjabi ('pa'), English ('en'), or auto-detection.
     """
     try:
+        api_key = os.getenv("LLM_API_KEY", "")
+        if not api_key or "placeholder" in api_key.lower():
+            raise RuntimeError("LLM_API_KEY is not configured. Please add your Groq API key in Streamlit Cloud Secrets (or .env).")
+
         client = _get_whisper_client()
         audio_file = io.BytesIO(audio_bytes)
         audio_file.name = filename

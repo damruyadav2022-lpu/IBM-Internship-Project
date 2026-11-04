@@ -22,6 +22,19 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# ── Streamlit Cloud Secrets Sync ──────────────────────────────────────────────
+# Automatically propagate Streamlit Community Cloud Secrets into os.environ
+try:
+    for _k, _v in st.secrets.items():
+        if isinstance(_v, str) and _k not in os.environ:
+            os.environ[_k] = _v
+        elif isinstance(_v, dict):
+            for _sub_k, _sub_v in _v.items():
+                if isinstance(_sub_v, str) and _sub_k not in os.environ:
+                    os.environ[_sub_k] = _sub_v
+except Exception:
+    pass
+
 # ── Constants ─────────────────────────────────────────────────────────────────
 ROOT = Path(__file__).parent
 DATA_DIR = ROOT / "data"
@@ -379,6 +392,15 @@ def safe_clamp(val, low: float = 0.0, high: float = 1.0) -> float:
     except (ValueError, TypeError):
         return low
 
+@st.cache_data(ttl=30)
+def is_backend_online() -> bool:
+    """Detect whether a dedicated FastAPI gateway is active on BACKEND_URL."""
+    try:
+        r = requests.get(f"{API_URL}/health", timeout=1.2)
+        return r.status_code == 200
+    except Exception:
+        return False
+
 @st.cache_data(ttl=300)
 def load_json(filename: str) -> dict:
     path = DATA_DIR / filename
@@ -390,12 +412,13 @@ def load_json(filename: str) -> dict:
 @st.cache_data(ttl=300)
 def get_realtime_weather(location: str) -> dict:
     """Fetch real-time weather from backend API or local WeatherService."""
-    try:
-        r = requests.get(f"{API_URL}/weather", params={"location": location}, timeout=8)
-        if r.status_code == 200:
-            return r.json()
-    except Exception:
-        pass
+    if is_backend_online():
+        try:
+            r = requests.get(f"{API_URL}/weather", params={"location": location}, timeout=8)
+            if r.status_code == 200:
+                return r.json()
+        except Exception:
+            pass
     try:
         sys.path.insert(0, str(ROOT / "backend"))
         from services.weather_service import get_weather_service
@@ -406,12 +429,13 @@ def get_realtime_weather(location: str) -> dict:
 @st.cache_data(ttl=300)
 def get_realtime_mandi() -> dict:
     """Fetch real-time Mandi APMC prices from backend API or local MandiService."""
-    try:
-        r = requests.get(f"{API_URL}/mandi-prices", timeout=8)
-        if r.status_code == 200:
-            return r.json()
-    except Exception:
-        pass
+    if is_backend_online():
+        try:
+            r = requests.get(f"{API_URL}/mandi-prices", timeout=8)
+            if r.status_code == 200:
+                return r.json()
+        except Exception:
+            pass
     try:
         sys.path.insert(0, str(ROOT / "backend"))
         from services.mandi_service import get_mandi_service
@@ -422,15 +446,16 @@ def get_realtime_mandi() -> dict:
 @st.cache_data(ttl=300)
 def get_climate_risk(location: str, crop: str = "wheat", stage: str = None) -> dict:
     """Fetch real-time AI Climate Risk and Early Warnings."""
-    try:
-        params = {"location": location, "crop": crop}
-        if stage:
-            params["stage"] = stage
-        r = requests.get(f"{API_URL}/climate-risk", params=params, timeout=10)
-        if r.status_code == 200:
-            return r.json()
-    except Exception:
-        pass
+    if is_backend_online():
+        try:
+            params = {"location": location, "crop": crop}
+            if stage:
+                params["stage"] = stage
+            r = requests.get(f"{API_URL}/climate-risk", params=params, timeout=10)
+            if r.status_code == 200:
+                return r.json()
+        except Exception:
+            pass
     try:
         sys.path.insert(0, str(ROOT / "backend"))
         from services.climate_risk_service import get_climate_risk_service
@@ -439,42 +464,42 @@ def get_climate_risk(location: str, crop: str = "wheat", stage: str = None) -> d
         return {}
 
 def call_chat(message: str, language: str, location: str) -> dict:
-    try:
-        r = requests.post(
-            f"{API_URL}/chat",
-            json={"message": message, "language": language, "location": location},
-            timeout=120,
-        )
-        r.raise_for_status()
-        return r.json()
-    except requests.exceptions.ConnectionError:
+    if is_backend_online():
         try:
-            sys.path.insert(0, str(ROOT / "backend"))
-            from agent.farming_agent import run_agent
-            return run_agent(message, language=language, location=location)
+            r = requests.post(
+                f"{API_URL}/chat",
+                json={"message": message, "language": language, "location": location},
+                timeout=120,
+            )
+            if r.status_code == 200:
+                return r.json()
         except Exception:
-            return {
-                "response": "⚠️ Backend service is reconnecting. Please ensure Uvicorn backend is running on port 8000.",
-                "sources": [],
-                "agent_steps": [],
-            }
+            pass
+    try:
+        sys.path.insert(0, str(ROOT / "backend"))
+        from agent.farming_agent import run_agent
+        return run_agent(message, language=language, location=location)
     except Exception as e:
-        return {"response": f"⚠️ Error: {str(e)}", "sources": [], "agent_steps": []}
+        return {
+            "response": f"⚠️ Could not process query: {str(e)}. If deployed on Streamlit Cloud, please verify LLM_API_KEY is configured in Secrets.",
+            "sources": [],
+            "agent_steps": [],
+        }
 
 def call_detect(image_bytes: bytes, filename: str) -> dict:
-    try:
-        r = requests.post(
-            f"{API_URL}/detect-disease",
-            files={"file": (filename, image_bytes, "image/jpeg")},
-            params={"top_k": 3},
-            timeout=60,
-        )
-        r.raise_for_status()
-        return r.json()
-    except requests.exceptions.ConnectionError:
-        return _local_detect(image_bytes)
-    except Exception as e:
-        return _local_detect(image_bytes)
+    if is_backend_online():
+        try:
+            r = requests.post(
+                f"{API_URL}/detect-disease",
+                files={"file": (filename, image_bytes, "image/jpeg")},
+                params={"top_k": 3},
+                timeout=60,
+            )
+            if r.status_code == 200:
+                return r.json()
+        except Exception:
+            pass
+    return _local_detect(image_bytes)
 
 def _local_detect(image_bytes: bytes) -> dict:
     try:
@@ -486,23 +511,25 @@ def _local_detect(image_bytes: bytes) -> dict:
         return {"success": False, "error": str(e), "detections": [], "message": f"Local detection failed: {e}"}
 
 def call_transcribe(audio_bytes: bytes, filename: str = "voice.wav", language: str = "auto") -> dict:
-    try:
-        r = requests.post(
-            f"{API_URL}/voice/transcribe",
-            files={"file": (filename, audio_bytes, "audio/wav")},
-            data={"language": language},
-            timeout=60,
-        )
-        r.raise_for_status()
-        return r.json()
-    except Exception:
+    if is_backend_online():
         try:
-            sys.path.insert(0, str(ROOT / "backend"))
-            from voice_assistant import transcribe_audio
-            text = transcribe_audio(audio_bytes, filename=filename, language=None if language == "auto" else language)
-            return {"success": True, "text": text}
-        except Exception as e:
-            return {"success": False, "text": "", "error": str(e)}
+            r = requests.post(
+                f"{API_URL}/voice/transcribe",
+                files={"file": (filename, audio_bytes, "audio/wav")},
+                data={"language": language},
+                timeout=60,
+            )
+            if r.status_code == 200:
+                return r.json()
+        except Exception:
+            pass
+    try:
+        sys.path.insert(0, str(ROOT / "backend"))
+        from voice_assistant import transcribe_audio
+        text = transcribe_audio(audio_bytes, filename=filename, language=None if language == "auto" else language)
+        return {"success": True, "text": text}
+    except Exception as e:
+        return {"success": False, "text": "", "error": str(e)}
 
 def call_tts(text: str, language: str = "English") -> bytes:
     try:
@@ -524,9 +551,11 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("""
+    backend_active = is_backend_online()
+    mode_tag = "FastAPI Gateway Active" if backend_active else "In-Process Cloud Engine"
+    st.markdown(f"""
     <div style="background:#092a20;border:1px solid #10b981;border-radius:10px;padding:8px 12px;font-size:0.8rem;color:#34d399;margin-bottom:16px;">
-        🟢 <b>AI Brain Online</b> • Groq 120B Active
+        🟢 <b>AI Brain Online</b> • {mode_tag}
     </div>
     """, unsafe_allow_html=True)
 
