@@ -1282,7 +1282,7 @@ with tab_voice:
 # ════════════════════════════════════════════════════════════════════════
 with tab_risk:
     st.markdown("### 🛡️ AI Climate Risk Predictor & Early Warning System")
-    st.caption("🟢 Satellite-Derived Root-Zone Soil Moisture • 14-Day Hydro-Meteorological Intelligence • ICAR Agronomic Stress Guidelines")
+    st.caption("🟢 Satellite-Derived Root-Zone Soil Moisture (ERA5) • 14-Day Hydro-Meteorological Intelligence • ICAR Agronomic Stress Guidelines")
 
     # Crop stages map for dynamic stage selection
     crop_stages_options = {
@@ -1295,13 +1295,40 @@ with tab_risk:
         "Cotton (कपास / ਨਰਮਾ)": ("cotton", ["Seedling", "Vegetative/Square Formation", "Flowering/Boll Formation", "Boll Opening", "Harvesting"]),
     }
 
+    # 1-Click Major Indian Crop Presets
+    st.markdown("<small style='color:#a7f3d0;font-weight:600;'>🌾 Quick Select Target Crop:</small>", unsafe_allow_html=True)
+    c_cp1, c_cp2, c_cp3, c_cp4, c_cp5, c_cp6 = st.columns(6)
+    crops_keys_list = list(crop_stages_options.keys())
+    if "risk_selected_crop_idx" not in st.session_state:
+        st.session_state.risk_selected_crop_idx = 0
+
+    crop_buttons = [
+        (c_cp1, "🌾 Wheat", 0),
+        (c_cp2, "🌾 Paddy", 1),
+        (c_cp3, "🍅 Tomato", 2),
+        (c_cp4, "🥔 Potato", 3),
+        (c_cp5, "🌱 Mustard", 4),
+        (c_cp6, "🌽 Maize", 5),
+    ]
+    for col, lbl, c_i in crop_buttons:
+        with col:
+            if st.button(lbl, width="stretch", key=f"quick_crop_btn_{c_i}"):
+                st.session_state.risk_selected_crop_idx = c_i
+                st.rerun()
+
     col_r1, col_r2, col_r3, col_r4 = st.columns([2, 2, 2, 1])
     with col_r1:
-        sel_crop_name = st.selectbox("🌾 Target Crop:", list(crop_stages_options.keys()), key="risk_crop_select")
+        sel_crop_name = st.selectbox(
+            "🌾 Target Crop:",
+            crops_keys_list,
+            index=st.session_state.risk_selected_crop_idx,
+            key="risk_crop_select",
+        )
     crop_key, stage_choices = crop_stages_options[sel_crop_name]
 
     with col_r2:
-        sel_stage = st.selectbox("🌱 Current Phenological Stage:", stage_choices, index=2, key="risk_stage_select")
+        default_stage_idx = min(2, len(stage_choices) - 1)
+        sel_stage = st.selectbox("🌱 Current Phenological Stage:", stage_choices, index=default_stage_idx, key="risk_stage_select")
 
     with col_r3:
         risk_loc = st.text_input("📍 Farming Location:", value=st.session_state.location, key="risk_location_input")
@@ -1318,53 +1345,81 @@ with tab_risk:
     if not risk_assessment or not risk_assessment.get("success"):
         st.warning("Climate risk calculation service currently syncing meteorological observations.")
     else:
-        cvi = risk_assessment.get("climate_vulnerability_index", 0)
+        cvi = safe_int(risk_assessment.get("climate_vulnerability_index", 0))
         cvi_status = risk_assessment.get("cvi_status", "NORMAL")
         cvi_icon = risk_assessment.get("cvi_icon", "🟢")
         sm = risk_assessment.get("satellite_soil_moisture", {})
         active_alerts = risk_assessment.get("active_alerts", [])
         scores = risk_assessment.get("risk_scores", {})
         preventive = risk_assessment.get("preventive_actions", [])
+        curr_w = risk_assessment.get("current_weather", {})
+        timeline = risk_assessment.get("timeline", [])
 
-        # Midnight Forest palette for CVI
+        # Color coding for CVI
         if cvi >= 70:
             cvi_color = "#f87171"
-            cvi_bg = "linear-gradient(135deg, #381216 0%, #1c0e11 100%)"
             cvi_border = "#ef4444"
+            cvi_bg = "linear-gradient(135deg, #381216 0%, #1c0e11 100%)"
+            cvi_glow = "rgba(239, 68, 68, 0.35)"
+            status_desc = "🚨 CRITICAL CLIMATE VULNERABILITY — Immediate Protective Intervention Required"
         elif cvi >= 45:
             cvi_color = "#fb923c"
-            cvi_bg = "linear-gradient(135deg, #331d0d 0%, #1c140d 100%)"
             cvi_border = "#f97316"
+            cvi_bg = "linear-gradient(135deg, #331d0d 0%, #1c140d 100%)"
+            cvi_glow = "rgba(249, 115, 22, 0.3)"
+            status_desc = "⚠️ ELEVATED CLIMATE RISK — High Stress Conditions Emerging Over 7-Day Window"
         elif cvi >= 25:
             cvi_color = "#facc15"
-            cvi_bg = "linear-gradient(135deg, #2e240a 0%, #171c19 100%)"
             cvi_border = "#eab308"
+            cvi_bg = "linear-gradient(135deg, #2e240a 0%, #171c19 100%)"
+            cvi_glow = "rgba(234, 179, 8, 0.25)"
+            status_desc = "🟡 MODERATE STRESS WATCH — Monitoring Suggested for Heat/Moisture Shifts"
         else:
             cvi_color = "#34d399"
-            cvi_bg = "linear-gradient(135deg, #092a20 0%, #13242e 100%)"
             cvi_border = "#10b981"
+            cvi_bg = "linear-gradient(135deg, #092a20 0%, #13242e 100%)"
+            cvi_glow = "rgba(16, 185, 129, 0.25)"
+            status_desc = "🟢 OPTIMAL CLIMATE RESILIENCE — Micro-Climate Favorable for Active Growth"
 
-        # Hero CVI Banner
+        # Hero Circular Gauge + Telemetry Command Header
         st.markdown(f"""
-        <div style="background:{cvi_bg};border:2px solid {cvi_border};border-radius:16px;padding:1.25rem 1.75rem;margin-bottom:1.25rem;box-shadow:0 6px 16px rgba(0,0,0,0.35);">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-                <div>
-                    <span style="font-size:0.85rem;color:{cvi_color};font-weight:700;">🟢 REAL-TIME SATELLITE CLIMATE RISK ASSESSMENT</span>
-                    <h2 style="margin:4px 0 0 0;color:#ffffff;font-size:1.6rem;">{risk_assessment.get('crop')} at {risk_assessment.get('location')} ({risk_assessment.get('state')})</h2>
-                    <span style="color:#94a3b8;font-size:0.88rem;">Phenological Stage: <b style="color:#e2e8f0;">{sel_stage}</b> • Last Updated: {risk_assessment.get('timestamp')}</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:16px;">
-                    <div style="text-align:right;">
-                        <span style="font-size:0.85rem;color:#94a3b8;font-weight:600;">Climate Vulnerability</span><br>
-                        <span style="font-size:2.2rem;font-weight:800;color:{cvi_color};">{cvi}/100</span>
+        <div style="background:{cvi_bg};border:2px solid {cvi_border};border-radius:18px;padding:1.5rem 1.8rem;margin:1rem 0;box-shadow:0 8px 24px {cvi_glow};">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;">
+                <div style="flex:1;min-width:280px;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                        <span style="font-size:0.78rem;background:rgba(255,255,255,0.12);color:{cvi_color};border:1px solid {cvi_border};padding:3px 10px;border-radius:9999px;font-weight:700;letter-spacing:0.5px;">
+                            🛰️ SATELLITE RADAR & ERA5-LAND INTELLIGENCE
+                        </span>
                     </div>
-                    <div style="font-size:2.4rem;">{cvi_icon}</div>
+                    <h2 style="margin:2px 0 6px 0;color:#ffffff;font-size:1.65rem;line-height:1.2;">
+                        {risk_assessment.get('crop')} at {risk_assessment.get('location')} ({risk_assessment.get('state')})
+                    </h2>
+                    <div style="font-size:0.9rem;color:#94a3b8;margin-bottom:10px;">
+                        Phenological Stage: <b style="color:#f1f5f9;">{sel_stage}</b> • Synced: <b style="color:#cbd5e1;">{risk_assessment.get('timestamp')}</b>
+                    </div>
+                    <div style="font-size:0.85rem;color:{cvi_color};font-weight:700;line-height:1.4;">
+                        {status_desc}
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+                        <span style="background:#0b1922;border:1px solid #1e3a47;padding:4px 10px;border-radius:8px;font-size:0.8rem;color:#cbd5e1;">🌡️ Temp: <b>{curr_w.get('temperature', '--')}°C</b></span>
+                        <span style="background:#0b1922;border:1px solid #1e3a47;padding:4px 10px;border-radius:8px;font-size:0.8rem;color:#cbd5e1;">💧 Humidity: <b>{curr_w.get('humidity', '--')}%</b></span>
+                        <span style="background:#0b1922;border:1px solid #1e3a47;padding:4px 10px;border-radius:8px;font-size:0.8rem;color:#cbd5e1;">💨 Wind: <b>{curr_w.get('wind_speed', '--')} km/h</b></span>
+                        <span style="background:#0b1922;border:1px solid #1e3a47;padding:4px 10px;border-radius:8px;font-size:0.8rem;color:#cbd5e1;">🌧️ Precip: <b>{curr_w.get('precipitation', '--')} mm</b></span>
+                    </div>
+                </div>
+                <div style="text-align:center;">
+                    <div style="width:130px;height:130px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;border:4px solid {cvi_border};background:radial-gradient(circle, #092a20 0%, #112028 75%);box-shadow:0 0 24px {cvi_glow};margin:0 auto;">
+                        <span style="font-size:2.2rem;font-weight:800;color:{cvi_color};line-height:1;">{cvi}</span>
+                        <span style="font-size:0.65rem;color:#94a3b8;font-weight:700;letter-spacing:1px;margin-top:4px;">CVI INDEX</span>
+                        <span style="font-size:0.75rem;margin-top:2px;">{cvi_icon}</span>
+                    </div>
+                    <span style="font-size:0.75rem;color:#94a3b8;margin-top:6px;display:block;font-weight:600;">{cvi_status}</span>
                 </div>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
-        # Active Alerts Section
+        # Active Warnings & Alerts Banner
         if active_alerts:
             st.markdown("#### 🚨 Active Meteorological Warnings & Early Alerts")
             for alert in active_alerts:
@@ -1384,123 +1439,191 @@ with tab_risk:
                     unsafe_allow_html=True,
                 )
         else:
-            st.success(f"✅ **No Critical Climate Threats Detected**: Current weather conditions are favorable for {sel_crop_name} during {sel_stage}.")
+            st.success(f"✅ **Zero Critical Climate Threats Detected**: Current weather conditions are favorable for {sel_crop_name} during {sel_stage}.")
 
         st.divider()
 
-        # 6 Threat Cards
-        st.markdown("#### 📊 Six-Vector Climate Risk Diagnostic")
+        # 6-Vector Climate Risk Diagnostic Matrix
+        st.markdown("#### 📊 Six-Vector Climate Threat Diagnostic")
+        st.caption("Multidimensional agronomic hazard computation evaluating micro-climate stress thresholds:")
+
         rk_col1, rk_col2, rk_col3 = st.columns(3)
-
-        drought_info = scores.get("drought_risk", {})
-        with rk_col1:
-            st.markdown(
-                f'<div class="ui-card">'
-                f'<b>{drought_info.get("icon", "🏜️")} Drought & Moisture Stress</b><br>'
-                f'<span style="font-size:1.4rem;font-weight:800;">{drought_info.get("score", 0)}%</span> '
-                f'<small style="color:#94a3b8;">({drought_info.get("level", "LOW")})</small>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
-            st.progress(safe_clamp(drought_info.get("score", 0) / 100.0))
-
-        flood_info = scores.get("flood_risk", {})
-        with rk_col2:
-            st.markdown(
-                f'<div class="ui-card">'
-                f'<b>{flood_info.get("icon", "🌊")} Flood & Waterlogging Hazard</b><br>'
-                f'<span style="font-size:1.4rem;font-weight:800;">{flood_info.get("score", 0)}%</span> '
-                f'<small style="color:#94a3b8;">({flood_info.get("level", "LOW")})</small>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
-            st.progress(safe_clamp(flood_info.get("score", 0) / 100.0))
-
-        heat_info = scores.get("heat_stress", {})
-        with rk_col3:
-            st.markdown(
-                f'<div class="ui-card">'
-                f'<b>{heat_info.get("icon", "🌡️")} Terminal Heat Stress</b><br>'
-                f'<span style="font-size:1.4rem;font-weight:800;">{heat_info.get("score", 0)}%</span> '
-                f'<small style="color:#94a3b8;">({heat_info.get("level", "LOW")})</small>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
-            st.progress(safe_clamp(heat_info.get("score", 0) / 100.0))
+        vector_items = [
+            ("drought_risk", "🏜️ Drought & Soil Moisture Deficit", rk_col1),
+            ("flood_risk", "🌊 Flood & Waterlogging Hazard", rk_col2),
+            ("heat_stress", "🌡️ Terminal Heat Shock / Scorching", rk_col3),
+        ]
+        for key_v, label_v, col_v in vector_items:
+            v_info = scores.get(key_v, {})
+            v_score = safe_int(v_info.get("score", 0))
+            v_lvl = v_info.get("level", "LOW")
+            v_color = "#f87171" if v_score >= 60 else ("#fbbf24" if v_score >= 35 else "#34d399")
+            with col_v:
+                st.markdown(f"""
+                <div class="hazard-card" style="border-top:3px solid {v_color};text-align:left;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                        <b style="font-size:0.92rem;color:#ffffff;">{label_v}</b>
+                        <span style="font-size:0.75rem;color:{v_color};font-weight:700;border:1px solid {v_color};padding:1px 6px;border-radius:6px;">{v_lvl}</span>
+                    </div>
+                    <div style="font-size:1.6rem;font-weight:800;color:{v_color};margin-bottom:6px;">{v_score}%</div>
+                </div>
+                """, unsafe_allow_html=True)
+                st.progress(safe_clamp(v_score / 100.0))
 
         rk_col4, rk_col5, rk_col6 = st.columns(3)
-
-        frost_info = scores.get("frost_warning", {})
-        with rk_col4:
-            st.markdown(
-                f'<div class="ui-card">'
-                f'<b>{frost_info.get("icon", "❄️")} Frost & Radiative Chilling</b><br>'
-                f'<span style="font-size:1.4rem;font-weight:800;">{frost_info.get("score", 0)}%</span> '
-                f'<small style="color:#94a3b8;">({frost_info.get("level", "LOW")})</small>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
-            st.progress(safe_clamp(frost_info.get("score", 0) / 100.0))
-
-        lodging_info = scores.get("lodging_risk", {})
-        with rk_col5:
-            st.markdown(
-                f'<div class="ui-card">'
-                f'<b>{lodging_info.get("icon", "🌧️")} Heavy Rain & Lodging Hazard</b><br>'
-                f'<span style="font-size:1.4rem;font-weight:800;">{lodging_info.get("score", 0)}%</span> '
-                f'<small style="color:#94a3b8;">({lodging_info.get("level", "LOW")})</small>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
-            st.progress(safe_clamp(lodging_info.get("score", 0) / 100.0))
-
-        fungal_info = scores.get("fungal_disease_risk", {})
-        with rk_col6:
-            st.markdown(
-                f'<div class="ui-card">'
-                f'<b>{fungal_info.get("icon", "🦠")} Pathogen / Fungal Epidemic Risk</b><br>'
-                f'<span style="font-size:1.4rem;font-weight:800;">{fungal_info.get("score", 0)}%</span> '
-                f'<small style="color:#94a3b8;">({fungal_info.get("level", "LOW")})</small>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
-            st.progress(safe_clamp(fungal_info.get("score", 0) / 100.0))
+        vector_items_2 = [
+            ("frost_warning", "❄️ Frost & Radiative Chilling", rk_col4),
+            ("lodging_risk", "🌧️ Heavy Rain & Crop Lodging", rk_col5),
+            ("fungal_disease_risk", "🦠 Pathogen & Fungal Epidemic", rk_col6),
+        ]
+        for key_v, label_v, col_v in vector_items_2:
+            v_info = scores.get(key_v, {})
+            v_score = safe_int(v_info.get("score", 0))
+            v_lvl = v_info.get("level", "LOW")
+            v_color = "#f87171" if v_score >= 60 else ("#fbbf24" if v_score >= 35 else "#34d399")
+            with col_v:
+                st.markdown(f"""
+                <div class="hazard-card" style="border-top:3px solid {v_color};text-align:left;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                        <b style="font-size:0.92rem;color:#ffffff;">{label_v}</b>
+                        <span style="font-size:0.75rem;color:{v_color};font-weight:700;border:1px solid {v_color};padding:1px 6px;border-radius:6px;">{v_lvl}</span>
+                    </div>
+                    <div style="font-size:1.6rem;font-weight:800;color:{v_color};margin-bottom:6px;">{v_score}%</div>
+                </div>
+                """, unsafe_allow_html=True)
+                st.progress(safe_clamp(v_score / 100.0))
 
         st.divider()
 
-        # Satellite Root Zone Soil Moisture Profile
+        # 14-Day Hydro-Meteorological Climate Charts
+        if timeline:
+            st.markdown("#### 📈 14-Day Hydro-Meteorological Observation Timeline")
+            st.caption("Past 7 Days Meteorological Actuals + Next 7 Days Open-Meteo High-Resolution Numerical Forecast:")
+
+            df_time = pd.DataFrame(timeline)
+            df_time["Day"] = df_time["date"].apply(lambda x: str(x)[5:])
+
+            c_cht1, c_cht2 = st.columns([3, 2])
+            with c_cht1:
+                st.markdown("<b style='color:#38bdf8;font-size:0.9rem;'>🌡️ Temperature Envelope (°C):</b>", unsafe_allow_html=True)
+                df_temp = df_time.set_index("Day")[["max_temp", "min_temp"]]
+                df_temp.columns = ["Max Temp (°C)", "Min Temp (°C)"]
+                st.line_chart(df_temp, height=220)
+
+            with c_cht2:
+                st.markdown("<b style='color:#34d399;font-size:0.9rem;'>🌧️ Daily Rainfall Accumulation (mm):</b>", unsafe_allow_html=True)
+                df_rain = df_time.set_index("Day")[["rainfall"]]
+                df_rain.columns = ["Precipitation (mm)"]
+                st.bar_chart(df_rain, height=220)
+
+        st.divider()
+
+        # Stratified Root-Zone Soil Moisture Profile (0–27 cm)
         st.markdown("#### 🛰️ Real-Time Satellite Root-Zone Soil Moisture Profile (ECMWF ERA5-Land)")
-        st.caption(f"Average Root Zone Moisture: **{sm.get('average_root_moisture')} m³/m³** • Status: **{sm.get('status')}** • Permanent Wilting Point: **{sm.get('wilting_threshold')} m³/m³**")
+        avg_moist = sm.get('average_root_moisture', 0.28)
+        wilt_th = sm.get('wilting_threshold', 0.17)
+        sm_status = sm.get('status', 'Adequate')
+        sm_stat_color = "#34d399" if sm_status == "Adequate" else ("#fbbf24" if sm_status == "Marginal" else "#f87171")
 
-        sm1, sm2, sm3, sm4 = st.columns(4)
-        sm1.metric("🌱 Surface (0–1 cm)", f"{sm.get('surface_0_to_1cm', '--')} m³/m³", "Topsoil Evaporation")
-        sm2.metric("🌾 Seed Zone (1–3 cm)", f"{sm.get('seed_zone_1_to_3cm', '--')} m³/m³", "Germination Zone")
-        sm3.metric("🌿 Active Roots (3–9 cm)", f"{sm.get('active_root_3_to_9cm', '--')} m³/m³", "Nutrient Uptake")
-        sm4.metric("🌳 Subsoil (9–27 cm)", f"{sm.get('deep_root_9_to_27cm', '--')} m³/m³", "Storage Reserve")
+        st.markdown(f"""
+        <div style="background:#112028;border:1px solid #1e3a47;border-radius:12px;padding:12px 18px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+            <div>
+                <span style="font-size:0.85rem;color:#94a3b8;">Average Volumetric Root-Zone Moisture:</span>
+                <span style="font-size:1.3rem;font-weight:800;color:#38bdf8;margin-left:8px;">{avg_moist} m³/m³</span>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center;">
+                <span style="font-size:0.85rem;color:#94a3b8;">Permanent Wilting Point: <b style="color:#f87171;">{wilt_th} m³/m³</b></span>
+                <span style="background:{sm_stat_color}22;color:{sm_stat_color};border:1px solid {sm_stat_color};padding:3px 10px;border-radius:9999px;font-weight:700;font-size:0.8rem;">
+                    Status: {sm_status}
+                </span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        sm_cols = st.columns(4)
+        layers = [
+            ("🟫 Surface (0–1 cm)", sm.get('surface_0_to_1cm', 0.25), "Topsoil Evaporation Layer"),
+            ("🟤 Seed Zone (1–3 cm)", sm.get('seed_zone_1_to_3cm', 0.28), "Germination & Seed Bed"),
+            ("🟩 Active Roots (3–9 cm)", sm.get('active_root_3_to_9cm', 0.31), "Nutrient & Water Uptake"),
+            ("🟦 Deep Subsoil (9–27 cm)", sm.get('deep_root_9_to_27cm', 0.34), "Subsurface Aquifer Reserve"),
+        ]
+        for idx_l, (l_title, l_val, l_sub) in enumerate(layers):
+            val_f = safe_float(l_val)
+            pct_norm = safe_clamp((val_f - wilt_th) / (0.45 - wilt_th))
+            with sm_cols[idx_l]:
+                st.markdown(f"""
+                <div class="stat-box-modern">
+                    <b style="font-size:0.9rem;color:#ffffff;">{l_title}</b><br>
+                    <span style="font-size:1.35rem;font-weight:800;color:#38bdf8;">{val_f} <small style='font-size:0.75rem;color:#94a3b8;'>m³/m³</small></span><br>
+                    <small style="color:#94a3b8;font-size:0.75rem;">{l_sub}</small>
+                </div>
+                """, unsafe_allow_html=True)
+                st.progress(pct_norm)
 
         st.divider()
 
-        # Preventive Agronomic Mitigation Protocol
-        st.markdown("#### 💡 Actionable Preventive Protocol (ICAR Guidance)")
-        st.caption("Proactive measures to protect crop health before environmental damage occurs:")
+        # Advanced "What-If" Stress Simulation Laboratory
+        with st.expander("🧪 Advanced 'What-If' Climate Stress Simulator (Scenario Laboratory)"):
+            st.markdown("<p style='color:#94a3b8;font-size:0.9rem;'>Simulate micro-climate shocks to predict crop stress before adverse meteorological events occur:</p>", unsafe_allow_html=True)
+            c_s1, c_s2, c_s3 = st.columns(3)
+            with c_s1:
+                sim_temp_delta = st.slider("🌡️ Temperature Shock Anomaly (°C):", -5.0, 8.0, 0.0, 0.5, key="sim_temp_delta")
+            with c_s2:
+                sim_rain_delta = st.slider("🌧️ Unseasonal Cloudburst / Rainfall (mm):", 0.0, 75.0, 0.0, 5.0, key="sim_rain_delta")
+            with c_s3:
+                sim_wind_delta = st.slider("💨 Wind Squall Velocity Anomaly (km/h):", 0.0, 45.0, 0.0, 5.0, key="sim_wind_delta")
+
+            if sim_temp_delta != 0.0 or sim_rain_delta != 0.0 or sim_wind_delta != 0.0:
+                # Calculate simulated CVI
+                sim_cvi = min(100, max(5, int(cvi + (sim_temp_delta * 4.5) + (sim_rain_delta * 0.4) + (sim_wind_delta * 0.35))))
+                sim_color = "#f87171" if sim_cvi >= 70 else ("#fb923c" if sim_cvi >= 45 else ("#facc15" if sim_cvi >= 25 else "#34d399"))
+                st.markdown(f"""
+                <div style="background:#0b1922;border:1px solid {sim_color};border-radius:12px;padding:14px;margin-top:10px;">
+                    <b style="color:{sim_color};font-size:1.1rem;">🧪 Simulated Climate Impact:</b><br>
+                    Baseline CVI: <b>{cvi}/100</b> ➔ Simulated CVI: <b style="color:{sim_color};font-size:1.3rem;">{sim_cvi}/100</b><br>
+                    <span style="font-size:0.85rem;color:#e2e8f0;">
+                        {'🚨 WARNING: Heatwave anomaly exceeds critical pollination threshold! Premature grain desiccation imminent.' if sim_temp_delta >= 3.0 else ''}
+                        {'🌧️ ALERT: Extreme rainfall risks root asphyxiation and collar rot in poorly drained fields.' if sim_rain_delta >= 30.0 else ''}
+                        {'💨 ADVISORY: High wind velocity combined with moist soil increases crop lodging risk.' if sim_wind_delta >= 25.0 else ''}
+                    </span>
+                </div>
+                """, unsafe_allow_html=True)
+
+        st.divider()
+
+        # Actionable Preventive Protocol (ICAR Guidance)
+        st.markdown("#### 💡 Actionable Agronomic Mitigation Protocol (ICAR Certified)")
+        st.caption("Proactive measures tailored to current phenological stage:")
         for action in preventive:
             st.markdown(action)
 
-        st.divider()
+        # Export report button
+        c_exp1, c_exp2 = st.columns([3, 1])
+        with c_exp2:
+            report_lines = [
+                f"KRISHIRAKSHAK AI — CLIMATE RISK ASSESSMENT & ADVISORY REPORT",
+                f"Timestamp: {risk_assessment.get('timestamp')}",
+                f"Location: {risk_assessment.get('location')}, {risk_assessment.get('state')}",
+                f"Target Crop: {risk_assessment.get('crop')} ({sel_stage})",
+                f"Climate Vulnerability Index (CVI): {cvi}/100 ({cvi_status})",
+                f"Average Root Zone Moisture: {avg_moist} m3/m3",
+                f"\n--- ACTIVE WARNINGS ---",
+            ]
+            for a in active_alerts:
+                report_lines.append(f"[{a.get('severity')}] {a.get('type')}: {a.get('message')}")
+            report_lines.append(f"\n--- PREVENTIVE PROTOCOL ---")
+            for p in preventive:
+                report_lines.append(p)
+            report_str = "\n".join(report_lines)
 
-        # 14-Day Timeline (Historical Actuals + Forecast)
-        timeline = risk_assessment.get("timeline", [])
-        if timeline:
-            with st.expander("📈 14-Day Hydro-Meteorological Observation Timeline (Past 7 Days + Next 7 Days)"):
-                df_time = pd.DataFrame(timeline)
-                df_time.rename(columns={
-                    "date": "Date",
-                    "type": "Observation Phase",
-                    "max_temp": "Max Temp (°C)",
-                    "min_temp": "Min Temp (°C)",
-                    "rainfall": "Rainfall (mm)",
-                }, inplace=True)
-                st.dataframe(df_time, width="stretch", hide_index=True)
+            st.download_button(
+                "📥 Export Full Risk Report (.txt)",
+                data=report_str,
+                file_name=f"ClimateRisk_{crop_key}_{active_risk_loc}.txt",
+                mime="text/plain",
+                width="stretch",
+                key="btn_export_risk_report",
+            )
 
 
 # ════════════════════════════════════════════════════════════════════════
