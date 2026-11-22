@@ -958,6 +958,16 @@ with tab_chat:
                         unsafe_allow_html=True,
                     )
 
+                    if msg.get("audio"):
+                        st.audio(msg["audio"], format="audio/mp3")
+                    else:
+                        c_aud, _ = st.columns([1, 4])
+                        with c_aud:
+                            if st.button("🔊 Listen", key=f"listen_btn_t1_{idx}", help="Listen to spoken audio"):
+                                with st.spinner("Synthesizing speech..."):
+                                    msg["audio"] = call_tts(msg["content"], st.session_state.language)
+                                st.rerun()
+
                     steps = msg.get("steps", [])
                     if steps:
                         with st.expander(f"🧠 Agent Reasoning & Telemetry ({len(steps)} Domain Tools Used)"):
@@ -1009,23 +1019,15 @@ with tab_chat:
 
 
 # ════════════════════════════════════════════════════════════════════════
-# TAB 2 — AI Voice Assistant
+# TAB 2 — AI Voice Assistant (Conversational Voice ChatBot)
 # ════════════════════════════════════════════════════════════════════════
 with tab_voice:
-    st.markdown("### 🎙️ Multilingual AI Voice Farming Assistant")
-    st.caption("ਬੋਲ ਕੇ ਖੇਤੀ ਸਲਾਹ ਲਵੋ • बोलकर खेती सलाह पाएं • Designed for Farmers Who Prefer Speaking Over Typing")
+    st.markdown("### 🎙️ Multilingual AI Voice Farming Chatbot")
+    st.caption("ਬੋਲ ਕੇ ਖੇਤੀ ਸਲਾਹ ਲਵੋ • बोलकर खेती सलाह पाएं • Conversational Speech-to-Speech Agricultural Intelligence")
 
-    col_v1, col_v2 = st.columns([1, 1], gap="large")
-
-    with col_v1:
-        st.markdown("""
-        <div class="ui-card">
-            <h4 style="margin-top:0;color:#ffffff;">🗣️ Spoken Voice Input</h4>
-            <p style="color:#94a3b8;font-size:0.9rem;">Speak your farming queries naturally. Whisper AI transcribes your spoken language, routes it through our agronomy reasoning agent, and synthesizes human-like voice responses.</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Voice language selection
+    # Header Controls: Language Selector & Action Buttons
+    c_vh1, c_vh2 = st.columns([3, 1])
+    with c_vh1:
         v_lang_sel = st.radio(
             "Select Voice Language / ਬੋਲੀ / भाषा:",
             ["Hindi (हिंदी)", "Punjabi (ਪੰਜਾਬੀ)", "English"],
@@ -1034,140 +1036,245 @@ with tab_voice:
         )
         clean_vlang = "Hindi" if "Hindi" in v_lang_sel else ("Punjabi" if "Punjabi" in v_lang_sel else "English")
 
-        input_voice_mode = st.radio(
-            "Input Method:",
-            ["🎙️ Live Microphone", "📁 Upload Audio File", "💡 Spoken Farmer Presets"],
-            horizontal=True,
-        )
+    with c_vh2:
+        c_vclr, c_vexp = st.columns(2)
+        with c_vclr:
+            if st.button("🗑️ Clear", width="stretch", help="Clear voice chat history", key="clear_voice_chat_btn"):
+                st.session_state.voice_chat_history = []
+                st.rerun()
+        with c_vexp:
+            if st.session_state.voice_chat_history:
+                transcript_text = "\n\n".join([
+                    f"Farmer ({item.get('lang', clean_vlang)}): {item.get('query')}\nKrishiRakshak AI: {item.get('response')}"
+                    for item in st.session_state.voice_chat_history
+                ])
+                st.download_button(
+                    "📥 Export",
+                    data=transcript_text,
+                    file_name="KrishiRakshak_Voice_Conversation.txt",
+                    mime="text/plain",
+                    width="stretch",
+                    key="export_voice_chat_btn",
+                )
 
-        audio_bytes_to_process = None
-        preset_spoken_text = None
+    # 1-Tap Quick Spoken Query Chips
+    st.markdown("<small style='color:#a7f3d0;font-weight:600;'>💡 Tap any quick spoken prompt to hear instant voice advice:</small>", unsafe_allow_html=True)
+    if clean_vlang == "Hindi":
+        voice_presets = [
+            ("🍅 टमाटर रोग सलाह", "मेरे टमाटर के पत्तों पर पीले धब्बे आ रहे हैं, इसका इलाज क्या है?"),
+            ("💰 दिल्ली मंडी भाव", "आज दिल्ली और आज़ादपुर मंडी में टमाटर और आलू का क्या भाव है?"),
+            ("🌧️ कीटनाशक स्प्रे मौसम", "क्या आज गेहूं की फसल में कीटनाशक का छिड़काव कर सकते हैं?"),
+            ("🌾 रबी गेहूं उत्तम पैदावार", "रबी मौसम के लिए गेहूं की कौन सी किस्म सबसे ज्यादा पैदावार देती है?"),
+        ]
+    elif clean_vlang == "Punjabi":
+        voice_presets = [
+            ("🍅 ਟਮਾਟਰ ਪੀਲੇ ਧੱਬੇ", "ਮੇਰੇ ਟਮਾਟਰ ਦੇ ਪੱਤਿਆਂ ਤੇ ਪੀਲੇ ਧੱਬੇ ਆ ਰਹੇ ਹਨ, ਕੀ ਕਰੀਏ?"),
+            ("🌾 ਕਣਕ ਪੀਲੀ ਕੁੰਗੀ", "ਕਣਕ ਦੀ ਫਸਲ ਵਿੱਚ ਪੀਲੀ ਕੁੰਗੀ ਦੀ ਰੋਕਥਾਮ ਕਿਵੇਂ ਕਰੀਏ?"),
+            ("💰 ਮੰਡੀ ਭਾਅ ਅੱਪਡੇਟ", "ਅੱਜ ਮੰਡੀ ਵਿੱਚ ਟਮਾਟਰ ਅਤੇ ਆਲੂ ਦਾ ਰੇਟ ਕੀ ਹੈ?"),
+            ("🌧️ ਸਪਰੇਅ ਮੌਸਮ ਸਲਾਹ", "ਕੀ ਅੱਜ ਖੇਤ ਵਿੱਚ ਸਪਰੇਅ ਕਰਨਾ ਸਹੀ ਰਹੇਗਾ?"),
+        ]
+    else:
+        voice_presets = [
+            ("🍅 Tomato Disease Advice", "My tomato plant leaves have yellow spots and curling, what should I do?"),
+            ("💰 Today's Mandi Rates", "What is today's mandi market rate for tomatoes in Delhi?"),
+            ("🌧️ Spray Weather Window", "What is today's agricultural weather advisory for chemical spraying?"),
+            ("🌾 Rabi Wheat Management", "How to effectively manage weed and nitrogen schedule for wheat?"),
+        ]
 
-        if input_voice_mode == "🎙️ Live Microphone":
-            mic_audio = st.audio_input(f"Tap microphone to speak in {clean_vlang}:")
-            if mic_audio:
-                audio_bytes_to_process = mic_audio.getvalue()
-                st.audio(mic_audio, format="audio/wav")
+    c_vp = st.columns(4)
+    preset_triggered_query = None
+    for p_idx, (p_label, p_query) in enumerate(voice_presets):
+        with c_vp[p_idx]:
+            if st.button(p_label, width="stretch", key=f"voice_chip_{p_idx}", help=p_query):
+                preset_triggered_query = p_query
 
-        elif input_voice_mode == "📁 Upload Audio File":
-            uploaded_audio = st.file_uploader(
-                "Upload a voice note recording:",
-                type=["wav", "mp3", "m4a", "webm", "ogg"],
-                help="Supports WAV, MP3, M4A, WebM, and OGG formats",
+    # Dedicated ChatBot Message Stream Container
+    voice_chat_box = st.container(height=480)
+    with voice_chat_box:
+        if not st.session_state.voice_chat_history and not preset_triggered_query:
+            welcome_lang_text = {
+                "Hindi": "बोलकर या लिखकर खेती से जुड़ी कोई भी सलाह पूछें। मैं हिंदी में बोलकर और लिखकर उपाय बताऊंगा।",
+                "Punjabi": "ਬੋਲ ਕੇ ਜਾਂ ਲਿਖ ਕੇ ਖੇਤੀਬਾੜੀ ਸਲਾਹ ਪੁੱਛੋ। ਮੈਂ ਪੰਜਾਬੀ ਵਿੱਚ ਬੋਲ ਕੇ ਸਹੀ ਹੱਲ ਦੱਸਾਂਗਾ।",
+                "English": "Speak naturally or select a suggestion to receive real-time spoken audio prescriptions & agronomy advice.",
+            }.get(clean_vlang, "")
+
+            st.markdown(f"""
+            <div style="background:radial-gradient(circle, #0d2820 0%, #13242e 80%);border:1px solid #1e3a47;border-radius:18px;padding:2.5rem 1.5rem;text-align:center;color:#94a3b8;margin:1rem 0;">
+                <div style="display:inline-flex;align-items:center;justify-content:center;width:70px;height:70px;border-radius:50%;background:#092a20;border:2px solid #10b981;margin-bottom:0.75rem;box-shadow:0 0 20px rgba(16, 185, 129, 0.35);">
+                    <span style="font-size:2.2rem;">🎙️</span>
+                </div>
+                <br>
+                <b style="color:#ffffff;font-size:1.25rem;">KrishiRakshak Voice AI Chatbot</b><br>
+                <span style="color:#34d399;font-weight:600;font-size:0.95rem;">{welcome_lang_text}</span><br>
+                <span style="font-size:0.85rem;display:inline-block;max-width:520px;margin-top:10px;color:#cbd5e1;">
+                    Tap the microphone below to speak, click any quick prompt chip above, or type your question. Every answer includes a natural voice audio prescription.
+                </span>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            for idx, item in enumerate(st.session_state.voice_chat_history):
+                # Farmer User Bubble
+                st.markdown(f"""
+                <div class="chat-bubble-user">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;gap:8px;">
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <span>🧑‍🌾</span>
+                            <b style="color:#ffffff;">Farmer ({item.get('lang', clean_vlang)})</b>
+                        </div>
+                        <span style="font-size:0.75rem;background:rgba(255,255,255,0.18);padding:2px 8px;border-radius:10px;">🗣️ Spoken Voice</span>
+                    </div>
+                    <div style="font-size:1.02rem;font-weight:600;margin-top:4px;">"{item['query']}"</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                if item.get("user_audio"):
+                    st.audio(item["user_audio"], format="audio/wav")
+
+                # KrishiRakshak Assistant Bubble
+                sources_html = ""
+                if item.get("sources"):
+                    sources_tags = " ".join([f'<span class="source-tag">📌 {s}</span>' for s in item["sources"]])
+                    sources_html = f"<div style='margin-top:10px;'><b>Verified Sources:</b><br>{sources_tags}</div>"
+
+                st.markdown(f"""
+                <div class="chat-bubble-assistant">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span style="font-size:1.2rem;">🌾</span>
+                            <b style="color:#34d399;">KrishiRakshak Voice AI:</b>
+                            <span style="font-size:0.72rem;background:#064e3b;color:#a7f3d0;padding:2px 8px;border-radius:10px;border:1px solid #059669;">🔊 Spoken Audio ({item.get('lang', clean_vlang)})</span>
+                        </div>
+                        <div class="sound-wave-box" style="height:24px;padding:3px 8px;">
+                            <div class="wave-bar" style="width:3px;"></div>
+                            <div class="wave-bar" style="width:3px;"></div>
+                            <div class="wave-bar" style="width:3px;"></div>
+                            <div class="wave-bar" style="width:3px;"></div>
+                            <div class="wave-bar" style="width:3px;"></div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom:8px;color:#f1f5f9;line-height:1.6;">
+                        {item['response']}
+                    </div>
+                    {sources_html}
+                </div>
+                """, unsafe_allow_html=True)
+
+                if item.get("audio"):
+                    is_latest = (idx == len(st.session_state.voice_chat_history) - 1)
+                    st.audio(item["audio"], format="audio/mp3", autoplay=is_latest)
+
+    # Trigger handling for preset chips
+    if preset_triggered_query:
+        with st.spinner(f"🧠 KrishiRakshak reasoning & generating spoken audio in {clean_vlang}..."):
+            agent_res = call_chat(preset_triggered_query, clean_vlang, st.session_state.location)
+            resp_text = agent_res.get("response", "")
+            sources = agent_res.get("sources", [])
+            speech_bytes = call_tts(resp_text, clean_vlang)
+            st.session_state.voice_chat_history.append({
+                "query": preset_triggered_query,
+                "response": resp_text,
+                "audio": speech_bytes,
+                "lang": clean_vlang,
+                "sources": sources,
+                "user_audio": None,
+            })
+            st.rerun()
+
+    # Unified ChatBot Input Dock (Microphone + Text + File Upload)
+    st.markdown("<br>", unsafe_allow_html=True)
+    c_dock_mic, c_dock_txt = st.columns([1, 2])
+
+    with c_dock_mic:
+        st.markdown("<b style='color:#34d399;'>🎙️ Speak Question (Mic):</b>", unsafe_allow_html=True)
+        if hasattr(st, "audio_input"):
+            mic_audio = st.audio_input(
+                f"Tap mic to speak in {clean_vlang}:",
+                key=f"voice_bot_mic_{len(st.session_state.voice_chat_history)}",
+                label_visibility="collapsed",
             )
-            if uploaded_audio:
-                audio_bytes_to_process = uploaded_audio.getvalue()
-                st.audio(uploaded_audio)
+            if mic_audio:
+                audio_bytes = mic_audio.getvalue()
+                h_val = hash(audio_bytes)
+                if st.session_state.get("last_processed_voice_hash") != h_val:
+                    st.session_state.last_processed_voice_hash = h_val
+                    with st.spinner("🎙️ Transcribing farmer voice with Whisper AI..."):
+                        stt = call_transcribe(audio_bytes, language=clean_vlang)
+                        if stt.get("success") and stt.get("text"):
+                            q_text = stt.get("text")
+                            with st.spinner(f"🧠 KrishiRakshak diagnosing in {clean_vlang}..."):
+                                agent_res = call_chat(q_text, clean_vlang, st.session_state.location)
+                                resp_text = agent_res.get("response", "")
+                                sources = agent_res.get("sources", [])
+                                speech_bytes = call_tts(resp_text, clean_vlang)
+                                st.session_state.voice_chat_history.append({
+                                    "query": q_text,
+                                    "response": resp_text,
+                                    "audio": speech_bytes,
+                                    "lang": clean_vlang,
+                                    "sources": sources,
+                                    "user_audio": audio_bytes,
+                                })
+                                st.rerun()
+                        else:
+                            st.error(f"Voice recognition error: {stt.get('error', 'No speech detected')}")
+        else:
+            st.caption("Native browser microphone requires Streamlit 1.38+. Use prompt chips above or text input.")
 
-        elif input_voice_mode == "💡 Spoken Farmer Presets":
-            st.markdown("**Tap any preset spoken farmer query to test:**")
-            if clean_vlang == "Hindi":
-                presets = [
-                    "🍅 मेरे टमाटर के पत्तों पर पीले धब्बे आ रहे हैं, इसका इलाज क्या है?",
-                    "💰 आज दिल्ली और आज़ादपुर मंडी में टमाटर का क्या भाव है?",
-                    "🌧️ क्या आज गेहूं की फसल में कीटनाशक का छिड़काव कर सकते हैं?",
-                    "🌾 रबी मौसम के लिए गेहूं की कौन सी किस्म सबसे ज्यादा पैदावार देती है?",
-                ]
-            elif clean_vlang == "Punjabi":
-                presets = [
-                    "🍅 ਮੇਰੇ ਟਮਾਟਰ ਦੇ ਪੱਤਿਆਂ ਤੇ ਪੀਲੇ ਧੱਬੇ ਆ ਰਹੇ ਹਨ, ਕੀ ਕਰੀਏ?",
-                    "🌾 ਕਣਕ ਦੀ ਫਸਲ ਵਿੱਚ ਪੀਲੀ ਕੁੰਗੀ ਦੀ ਰੋਕਥਾਮ ਕਿਵੇਂ ਕਰੀਏ?",
-                    "💰 ਅੱਜ ਮੰਡੀ ਵਿੱਚ ਟਮਾਟਰ ਅਤੇ ਆਲੂ ਦਾ ਰੇਟ ਕੀ ਹੈ?",
-                    "🌧️ ਕੀ ਅੱਜ ਖੇਤ ਵਿੱਚ ਸਪਰੇਅ ਕਰਨਾ ਸਹੀ ਰਹੇਗਾ?",
-                ]
-            else:
-                presets = [
-                    "🍅 My tomato plant leaves have yellow spots and curling, what should I do?",
-                    "💰 What is today's mandi market rate for tomatoes in Delhi?",
-                    "🌧️ What is today's agricultural weather advisory for spraying?",
-                    "🌾 How to effectively manage weed and nitrogen schedule for wheat?",
-                ]
-
-            for s in presets:
-                if st.button(s, width="stretch", key=f"voice_preset_{s[:18]}"):
-                    preset_spoken_text = s.split(" ", 1)[-1]
-
-        process_voice = st.button("🚀 Process Voice Advice", type="primary", width="stretch")
-
-    with col_v2:
-        st.markdown("#### 🎧 Spoken Diagnosis & Voice Output")
-        voice_output_container = st.container()
-
-        if process_voice or preset_spoken_text:
-            recognized_text = None
-
-            if audio_bytes_to_process:
-                with st.spinner("🎙️ Transcribing farmer voice with Whisper AI..."):
-                    stt = call_transcribe(audio_bytes_to_process, language=clean_vlang)
-                    if stt.get("success"):
-                        recognized_text = stt.get("text", "")
-                    else:
-                        st.error(f"Transcription error: {stt.get('error')}")
-            elif preset_spoken_text:
-                recognized_text = preset_spoken_text
-
-            if recognized_text:
-                with voice_output_container:
-                    # Farmer Query Box
-                    st.markdown(
-                        f'<div style="background:#0d231b;border:1px solid #10b981;border-radius:14px;padding:1rem;margin-bottom:1rem;color:#f1f5f9;">'
-                        f'<b>🗣️ Farmer Spoken Query ({clean_vlang}):</b><br>'
-                        f'<span style="font-size:1.15rem;color:#34d399;font-weight:700;">"{recognized_text}"</span>'
-                        f'</div>',
-                        unsafe_allow_html=True,
-                    )
-
-                    with st.spinner(f"🧠 KrishiRakshak diagnosing & retrieving remedies in {clean_vlang}..."):
-                        agent_res = call_chat(recognized_text, clean_vlang, st.session_state.location)
-
+    with c_dock_txt:
+        st.markdown("<b style='color:#34d399;'>💬 Or Type with Voice Reply:</b>", unsafe_allow_html=True)
+        with st.form("voice_bot_text_form", clear_on_submit=True):
+            c_tin, c_tsub = st.columns([4, 1])
+            typed_val = c_tin.text_input(
+                "Type question:",
+                placeholder=f"Ask in {clean_vlang} (e.g. टमाटर रोग का उपचार / What fertilizer for wheat?)...",
+                label_visibility="collapsed",
+            )
+            submit_voice_txt = c_tsub.form_submit_button("Send & Speak 🎙️", width="stretch")
+            if submit_voice_txt and typed_val.strip():
+                with st.spinner(f"🧠 KrishiRakshak reasoning & generating spoken audio in {clean_vlang}..."):
+                    agent_res = call_chat(typed_val, clean_vlang, st.session_state.location)
                     resp_text = agent_res.get("response", "")
                     sources = agent_res.get("sources", [])
-
-                    with st.spinner(f"🔊 Generating natural spoken {clean_vlang} audio..."):
-                        speech_bytes = call_tts(resp_text, clean_vlang)
-
-                    if speech_bytes:
-                        st.markdown("##### 🔊 Spoken Audio Prescription")
-                        st.audio(speech_bytes, format="audio/mp3", autoplay=True)
-
-                    st.markdown("##### 📋 Prescribed Agricultural Action")
-                    st.markdown(resp_text)
-
-                    if sources:
-                        sources_tags = " ".join([f'<span class="source-tag">📌 {s}</span>' for s in sources])
-                        st.markdown(f"<div style='margin-top:10px;'><b>Verified Sources:</b><br>{sources_tags}</div>", unsafe_allow_html=True)
-
+                    speech_bytes = call_tts(resp_text, clean_vlang)
                     st.session_state.voice_chat_history.append({
-                        "query": recognized_text,
+                        "query": typed_val,
                         "response": resp_text,
                         "audio": speech_bytes,
                         "lang": clean_vlang,
+                        "sources": sources,
+                        "user_audio": None,
                     })
+                    st.rerun()
 
-        elif st.session_state.voice_chat_history:
-            last = st.session_state.voice_chat_history[-1]
-            with voice_output_container:
-                st.markdown(
-                    f'<div style="background:#0d231b;border:1px solid #10b981;border-radius:14px;padding:1rem;margin-bottom:1rem;color:#f1f5f9;">'
-                    f'<b>🗣️ Farmer Spoken Query ({last["lang"]}):</b><br>'
-                    f'<span style="font-size:1.15rem;color:#34d399;font-weight:700;">"{last["query"]}"</span>'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
-                if last.get("audio"):
-                    st.markdown("##### 🔊 Spoken Audio Prescription")
-                    st.audio(last["audio"], format="audio/mp3")
-                st.markdown("##### 📋 Prescribed Agricultural Action")
-                st.markdown(last["response"])
-        else:
-            with voice_output_container:
-                st.markdown("""
-                <div style="background:#13242e;border:1px solid #1e3a47;border-radius:14px;padding:2.5rem;text-align:center;color:#94a3b8;">
-                    <span style="font-size:2.5rem;">🎙️</span><br>
-                    <b style="color:#ffffff;font-size:1.1rem;">Awaiting Spoken Query</b><br>
-                    <span>Tap the microphone or choose a preset query to hear natural spoken farming advice.</span>
-                </div>
-                """, unsafe_allow_html=True)
+    with st.expander("📁 Upload Recorded Voice Note (WAV / MP3 / M4A / OGG)"):
+        up_voice = st.file_uploader(
+            "Upload audio recording:",
+            type=["wav", "mp3", "m4a", "webm", "ogg"],
+            key="up_voice_file_bot",
+            label_visibility="collapsed",
+        )
+        if up_voice and st.button("🚀 Process Uploaded Voice File", key="btn_proc_up_voice"):
+            up_bytes = up_voice.getvalue()
+            with st.spinner("🎙️ Transcribing uploaded audio file..."):
+                stt = call_transcribe(up_bytes, filename=up_voice.name, language=clean_vlang)
+                if stt.get("success") and stt.get("text"):
+                    q_text = stt.get("text")
+                    with st.spinner(f"🧠 Reasoning in {clean_vlang}..."):
+                        agent_res = call_chat(q_text, clean_vlang, st.session_state.location)
+                        resp_text = agent_res.get("response", "")
+                        sources = agent_res.get("sources", [])
+                        speech_bytes = call_tts(resp_text, clean_vlang)
+                        st.session_state.voice_chat_history.append({
+                            "query": q_text,
+                            "response": resp_text,
+                            "audio": speech_bytes,
+                            "lang": clean_vlang,
+                            "sources": sources,
+                            "user_audio": up_bytes,
+                        })
+                        st.rerun()
+                else:
+                    st.error(f"Audio transcription failed: {stt.get('error', 'Unrecognized audio format')}")
 
 
 # ════════════════════════════════════════════════════════════════════════
