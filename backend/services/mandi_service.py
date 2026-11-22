@@ -128,7 +128,7 @@ class MandiService:
         url = f"https://api.data.gov.in/resource/{AGMARKNET_RESOURCE_ID}?{urllib.parse.urlencode(params)}"
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "KrishiRakshak/1.0"})
-            with urllib.request.urlopen(req, timeout=5) as resp:
+            with urllib.request.urlopen(req, timeout=2.0) as resp:
                 data = json.loads(resp.read().decode())
                 records = data.get("records", [])
                 logger.info(f"Fetched {len(records)} live Agmarknet records")

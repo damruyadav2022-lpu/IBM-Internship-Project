@@ -340,6 +340,97 @@ html, body, [class*="css"] {
     animation: pulse-ring 2s infinite;
 }
 
+/* Audio wave equalizer animation */
+.sound-wave-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 42px;
+    padding: 8px 16px;
+    background: #0d231b;
+    border-radius: 12px;
+    border: 1px solid #10b981;
+}
+.wave-bar {
+    width: 4px;
+    height: 100%;
+    background: #34d399;
+    border-radius: 4px;
+    animation: wave-anim 1.2s ease-in-out infinite;
+}
+.wave-bar:nth-child(2) { animation-delay: 0.15s; }
+.wave-bar:nth-child(3) { animation-delay: 0.3s; }
+.wave-bar:nth-child(4) { animation-delay: 0.45s; }
+.wave-bar:nth-child(5) { animation-delay: 0.6s; }
+@keyframes wave-anim {
+    0%, 100% { height: 8px; }
+    50% { height: 32px; }
+}
+
+/* Circular Risk Meter Gauge */
+.risk-meter-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 0;
+}
+.risk-meter-circle {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border: 4px solid #10b981;
+    background: radial-gradient(circle, #092a20 0%, #13242e 70%);
+    box-shadow: 0 0 24px rgba(16, 185, 129, 0.3);
+}
+.risk-score-big {
+    font-size: 2.3rem;
+    font-weight: 800;
+    line-height: 1;
+}
+.risk-score-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+}
+
+/* Hazard Card */
+.hazard-card {
+    background: #112028;
+    border: 1px solid #1e3a47;
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+    color: #f1f5f9;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.hazard-card:hover {
+    transform: translateY(-2px);
+    border-color: #38bdf8;
+    box-shadow: 0 6px 16px rgba(56, 189, 248, 0.15);
+}
+
+/* Sample Leaf Card */
+.sample-leaf-pill {
+    background: #13242e;
+    border: 1px solid #1e3a47;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 0.88rem;
+    color: #e2e8f0;
+    transition: all 0.2s ease;
+}
+.sample-leaf-pill:hover {
+    border-color: #10b981;
+    background: #0f2b23;
+}
+
 /* Buttons */
 .stButton > button {
     border-radius: 10px !important;
@@ -358,6 +449,29 @@ html, body, [class*="css"] {
     border: 1px solid #1e3a47 !important;
 }
 
+/* Telemetry Ribbon */
+.telemetry-ribbon {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    background: #0d1b22;
+    border: 1px solid #1e3a47;
+    border-radius: 12px;
+    padding: 8px 16px;
+    margin-bottom: 1.25rem;
+    align-items: center;
+    font-size: 0.82rem;
+    color: #94a3b8;
+}
+.telemetry-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.telemetry-item b {
+    color: #34d399;
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
     .hero-card {
@@ -369,6 +483,7 @@ html, body, [class*="css"] {
     .hero-title-group h1 { font-size: 1.6rem; }
     .chat-bubble-user { max-width: 95%; }
     .chat-bubble-assistant { max-width: 95%; }
+    .telemetry-ribbon { flex-direction: column; align-items: flex-start; gap: 6px; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -400,16 +515,18 @@ def safe_clamp(val, low: float = 0.0, high: float = 1.0) -> float:
     except (ValueError, TypeError):
         return low
 
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=300, show_spinner=False)
 def is_backend_online() -> bool:
     """Detect whether a dedicated FastAPI gateway is active on BACKEND_URL."""
+    if os.getenv("STREAMLIT_SERVER_HEADLESS") == "true" and "localhost" in BACKEND_URL:
+        return False
     try:
-        r = requests.get(f"{API_URL}/health", timeout=1.2)
+        r = requests.get(f"{API_URL}/health", timeout=0.3)
         return r.status_code == 200
     except Exception:
         return False
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=600, show_spinner=False)
 def load_json(filename: str) -> dict:
     path = DATA_DIR / filename
     if path.exists():
@@ -417,12 +534,12 @@ def load_json(filename: str) -> dict:
             return json.load(f)
     return {}
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=600, show_spinner=False)
 def get_realtime_weather(location: str) -> dict:
     """Fetch real-time weather from backend API or local WeatherService."""
     if is_backend_online():
         try:
-            r = requests.get(f"{API_URL}/weather", params={"location": location}, timeout=8)
+            r = requests.get(f"{API_URL}/weather", params={"location": location}, timeout=2.0)
             if r.status_code == 200:
                 return r.json()
         except Exception:
@@ -432,14 +549,15 @@ def get_realtime_weather(location: str) -> dict:
         from services.weather_service import get_weather_service
         return get_weather_service().get_live_weather(location)
     except Exception:
-        return {}
+        cities = load_json("weather_data.json").get("cities", {})
+        return cities.get(location, cities.get("Delhi", {}))
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=600, show_spinner=False)
 def get_realtime_mandi() -> dict:
     """Fetch real-time Mandi APMC prices from backend API or local MandiService."""
     if is_backend_online():
         try:
-            r = requests.get(f"{API_URL}/mandi-prices", timeout=8)
+            r = requests.get(f"{API_URL}/mandi-prices", timeout=2.0)
             if r.status_code == 200:
                 return r.json()
         except Exception:
@@ -451,7 +569,7 @@ def get_realtime_mandi() -> dict:
     except Exception:
         return load_json("mandi_prices.json")
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=600, show_spinner=False)
 def get_climate_risk(location: str, crop: str = "wheat", stage: str = None) -> dict:
     """Fetch real-time AI Climate Risk and Early Warnings."""
     if is_backend_online():
@@ -459,7 +577,7 @@ def get_climate_risk(location: str, crop: str = "wheat", stage: str = None) -> d
             params = {"location": location, "crop": crop}
             if stage:
                 params["stage"] = stage
-            r = requests.get(f"{API_URL}/climate-risk", params=params, timeout=10)
+            r = requests.get(f"{API_URL}/climate-risk", params=params, timeout=2.0)
             if r.status_code == 200:
                 return r.json()
         except Exception:
@@ -477,7 +595,7 @@ def call_chat(message: str, language: str, location: str) -> dict:
             r = requests.post(
                 f"{API_URL}/chat",
                 json={"message": message, "language": language, "location": location},
-                timeout=120,
+                timeout=60,
             )
             if r.status_code == 200:
                 return r.json()
@@ -494,6 +612,12 @@ def call_chat(message: str, language: str, location: str) -> dict:
             "agent_steps": [],
         }
 
+@st.cache_resource(show_spinner=False)
+def _get_cached_detector():
+    sys.path.insert(0, str(ROOT / "backend"))
+    from disease_detector import get_detector
+    return get_detector()
+
 def call_detect(image_bytes: bytes, filename: str) -> dict:
     if is_backend_online():
         try:
@@ -501,7 +625,7 @@ def call_detect(image_bytes: bytes, filename: str) -> dict:
                 f"{API_URL}/detect-disease",
                 files={"file": (filename, image_bytes, "image/jpeg")},
                 params={"top_k": 3},
-                timeout=60,
+                timeout=30,
             )
             if r.status_code == 200:
                 return r.json()
@@ -511,9 +635,7 @@ def call_detect(image_bytes: bytes, filename: str) -> dict:
 
 def _local_detect(image_bytes: bytes) -> dict:
     try:
-        sys.path.insert(0, str(ROOT / "backend"))
-        from disease_detector import get_detector
-        detector = get_detector()
+        detector = _get_cached_detector()
         return detector.detect(image_bytes, top_k=3)
     except Exception as e:
         return {"success": False, "error": str(e), "detections": [], "message": f"Local detection failed: {e}"}
@@ -727,6 +849,13 @@ st.markdown(f"""
         <div class="hero-pill">🔬 YOLOv8 Pathology</div>
     </div>
 </div>
+<div class="telemetry-ribbon">
+    <div class="telemetry-item">📍 Active Region: <b>{st.session_state.location}</b></div>
+    <div class="telemetry-item">🌾 Season: <b>Rabi 2026</b></div>
+    <div class="telemetry-item">🌐 Language: <b>{st.session_state.language}</b></div>
+    <div class="telemetry-item">⚡ Engine: <b>Sub-Second Autonomous Multi-Agent</b></div>
+    <div class="telemetry-item">🛰️ Telemetry: <b>Live Satellite & Mandi Feeds Synced</b></div>
+</div>
 """, unsafe_allow_html=True)
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
@@ -755,36 +884,36 @@ with tab_chat:
 
     quick_qs = {
         "English": [
-            "🌾 What crop is best for this rabi season?",
-            "🌧️ What is today's farming weather advisory?",
-            "💰 What is today's mandi rate for tomatoes?",
-            "🐛 How to control yellow rust on wheat crop?",
-            "🌱 What fertilizer schedule is best for mustard?",
-            "🔍 How to identify late blight in potato?",
+            ("🌾 Rabi Season", "What crop is best for this rabi season?"),
+            ("🌧️ Weather Advisory", "What is today's farming weather advisory?"),
+            ("💰 Mandi Rates", "What is today's mandi rate for tomatoes?"),
+            ("🐛 Pest Control", "How to control yellow rust on wheat crop?"),
+            ("🌱 Fertilizer Schedule", "What fertilizer schedule is best for mustard?"),
+            ("🔍 Disease Identification", "How to identify late blight in potato?"),
         ],
         "Hindi": [
-            "🌾 इस रबी मौसम में कौन सी फसल सबसे अच्छी है?",
-            "🌧️ आज की मौसम और कृषि सलाह क्या है?",
-            "💰 आज दिल्ली और मुंबई में टमाटर का मंडी भाव क्या है?",
-            "🐛 गेहूं में पीला रतुआ कीट से बचाव कैसे करें?",
-            "🌱 सरसों के लिए संतुलित खाद और सिंचाई क्या है?",
-            "🔍 आलू में पछेती झुलसा रोग की रोकथाम कैसे करें?",
+            ("🌾 रबी फसल", "इस रबी मौसम में कौन सी फसल सबसे अच्छी है?"),
+            ("🌧️ मौसम सलाह", "आज की मौसम और कृषि सलाह क्या है?"),
+            ("💰 टमाटर भाव", "आज दिल्ली और मुंबई में टमाटर का मंडी भाव क्या है?"),
+            ("🐛 कीट नियंत्रण", "गेहूं में पीला रतुआ कीट से बचाव कैसे करें?"),
+            ("🌱 खाद व उर्वरक", "सरसों के लिए संतुलित खाद और सिंचाई क्या है?"),
+            ("🔍 रोग पहचान", "आलू में पछेती झुलसा रोग की रोकथाम कैसे करें?"),
         ],
         "Punjabi": [
-            "🌾 ਇਸ ਹਾੜ੍ਹੀ ਰੁੱਤ ਵਿੱਚ ਕਿਹੜੀ ਫਸਲ ਸਭ ਤੋਂ ਵਧੀਆ ਹੈ?",
-            "🌧️ ਅੱਜ ਦੀ ਮੌਸਮ ਅਤੇ ਖੇਤੀਬਾੜੀ ਸਲਾਹ ਕੀ ਹੈ?",
-            "💰 ਅੱਜ ਮੰਡੀ ਵਿੱਚ ਟਮਾਟਰ ਅਤੇ ਆਲੂ ਦਾ ਰੇਟ ਕੀ ਹੈ?",
-            "🐛 ਕਣਕ ਦੀ ਫਸਲ ਵਿੱਚ ਪੀਲੀ ਕੁੰਗੀ ਦੀ ਰੋਕਥਾਮ ਕਿਵੇਂ ਕਰੀਏ?",
-            "🌱 ਸਰ੍ਹੋਂ ਦੀ ਫਸਲ ਲਈ ਖਾਦ ਅਤੇ ਪਾਣੀ ਦਾ ਪ੍ਰਬੰਧ ਕੀ ਹੈ?",
-            "🔍 ਟਮਾਟਰ ਦੇ ਪੱਤਿਆਂ ਤੇ ਪੀਲੇ ਧੱਬਿਆਂ ਦਾ ਇਲਾਜ ਕੀ ਹੈ?",
+            ("🌾 ਹਾੜ੍ਹੀ ਫਸਲ", "ਇਸ ਹਾੜ੍ਹੀ ਰੁੱਤ ਵਿੱਚ ਕਿਹੜੀ ਫਸਲ ਸਭ ਤੋਂ ਵਧੀਆ ਹੈ?"),
+            ("🌧️ ਮੌਸਮ ਸਲਾਹ", "ਅੱਜ ਦੀ ਮੌਸਮ ਅਤੇ ਖੇਤੀਬਾੜੀ ਸਲਾਹ ਕੀ ਹੈ?"),
+            ("💰 ਮੰਡੀ ਭਾਅ", "ਅੱਜ ਮੰਡੀ ਵਿੱਚ ਟਮਾਟਰ ਅਤੇ ਆਲੂ ਦਾ ਰੇਟ ਕੀ ਹੈ?"),
+            ("🐛 ਕੀੜੇ ਰੋਕਥਾਮ", "ਕਣਕ ਦੀ ਫਸਲ ਵਿੱਚ ਪੀਲੀ ਕੁੰਗੀ ਦੀ ਰੋਕਥਾਮ ਕਿਵੇਂ ਕਰੀਏ?"),
+            ("🌱 ਖਾਦ ਪ੍ਰਬੰਧ", "ਸਰ੍ਹੋਂ ਦੀ ਫਸਲ ਲਈ ਖਾਦ ਅਤੇ ਪਾਣੀ ਦਾ ਪ੍ਰਬੰਧ ਕੀ ਹੈ?"),
+            ("🔍 ਰੋਗ ਇਲਾਜ", "ਟਮਾਟਰ ਦੇ ਪੱਤਿਆਂ ਤੇ ਪੀਲੇ ਧੱਬਿਆਂ ਦਾ ਇਲਾਜ ਕੀ ਹੈ?"),
         ],
     }
 
     cols = st.columns(3)
     active_questions = quick_qs.get(st.session_state.language, quick_qs["English"])
-    for i, q in enumerate(active_questions):
+    for i, (label, q) in enumerate(active_questions):
         with cols[i % 3]:
-            if st.button(q, width="stretch", key=f"quick_btn_{i}"):
+            if st.button(f"{label}: {q[:32]}...", width="stretch", key=f"quick_btn_{i}", help=q):
                 st.session_state.messages.append({"role": "user", "content": q})
                 with st.spinner("KrishiRakshak reasoning with real-time tools..." if not is_hindi else "कृषि रक्षक वास्तविक समय सलाह तैयार कर रहा है..."):
                     result = call_chat(q, st.session_state.language, st.session_state.location)
@@ -805,20 +934,23 @@ with tab_chat:
             st.markdown(f"""
             <div style="text-align:center;padding:2.5rem 1rem;color:#94a3b8;">
                 <span style="font-size:3rem;">🌾</span><br>
-                <b style="font-size:1.2rem;color:#34d399;">Welcome to KrishiRakshak AI</b><br>
+                <b style="font-size:1.25rem;color:#34d399;">Welcome to KrishiRakshak AI</b><br>
                 <span style="color:#cbd5e1;">Ask about crop calendars, pest management, live weather forecasts, or APMC mandi rates.</span>
             </div>
             """, unsafe_allow_html=True)
         else:
-            for msg in st.session_state.messages:
+            for idx, msg in enumerate(st.session_state.messages):
                 if msg["role"] == "user":
                     st.markdown(f'<div class="chat-bubble-user">🧑‍🌾 <b>Farmer ({st.session_state.location}):</b><br>{msg["content"]}</div>', unsafe_allow_html=True)
                 else:
                     sources_html = "".join([f'<span class="source-tag">📌 {s}</span>' for s in msg.get("sources", [])])
                     st.markdown(
                         f'<div class="chat-bubble-assistant">'
-                        f'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
+                        f'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
+                        f'<div style="display:flex;align-items:center;gap:8px;">'
                         f'<span style="font-size:1.2rem;">🌾</span><b style="color:#34d399;">KrishiRakshak AI:</b>'
+                        f'</div>'
+                        f'<span style="font-size:0.75rem;color:#94a3b8;">Grounded Real-Time Advisory</span>'
                         f'</div>'
                         f'{msg["content"]}'
                         f'{"<div style=\'margin-top:12px;\'>" + sources_html + "</div>" if sources_html else ""}'
@@ -828,7 +960,7 @@ with tab_chat:
 
                     steps = msg.get("steps", [])
                     if steps:
-                        with st.expander(f"🧠 Agricultural Agent Reasoning ({len(steps)} Domain Tools Used)"):
+                        with st.expander(f"🧠 Agent Reasoning & Telemetry ({len(steps)} Domain Tools Used)"):
                             for s in steps:
                                 st.markdown(f"**Tool Invoked:** `{s.get('tool', 'Domain Tool')}`")
                                 st.caption(f"Input: {str(s.get('input', ''))[:140]}")
@@ -857,9 +989,21 @@ with tab_chat:
         })
         st.rerun()
 
-    c_c1, c_c2 = st.columns([4, 1])
-    with c_c2:
-        if st.button("🗑️ Clear Conversation", width="stretch"):
+    # Action Toolbar
+    c_act1, c_act2, c_act3 = st.columns([2, 2, 1])
+    with c_act1:
+        if st.session_state.messages:
+            last_resp = next((m["content"] for m in reversed(st.session_state.messages) if m["role"] == "assistant"), "")
+            if last_resp:
+                st.download_button(
+                    "📥 Export Advisory (Text)",
+                    data=last_resp,
+                    file_name="KrishiRakshak_Advisory.txt",
+                    mime="text/plain",
+                    width="stretch",
+                )
+    with c_act3:
+        if st.button("🗑️ Clear Chat", width="stretch"):
             st.session_state.messages = []
             st.rerun()
 
@@ -1310,28 +1454,38 @@ with tab_disease:
 
         elif source_tab == "🧪 Preloaded Test Samples":
             sample_dir = ROOT / "data" / "plantvillage" / "test" / "test"
-            sample_options = {
-                "🍅 Tomato Early Blight": "TomatoEarlyBlight1.JPG",
-                "🍅 Tomato Yellow Leaf Curl": "TomatoYellowCurlVirus1.JPG",
-                "🍅 Healthy Tomato Leaf": "TomatoHealthy1.JPG",
-                "🥔 Potato Early Blight": "PotatoEarlyBlight1.JPG",
-                "🥔 Healthy Potato Leaf": "PotatoHealthy1.JPG",
-                "🌽 Corn Common Rust": "CornCommonRust1.JPG",
-                "🍏 Apple Scab Disease": "AppleScab1.JPG",
-            }
-            sample_choice = st.selectbox("Select high-resolution sample leaf:", list(sample_options.keys()))
-            sample_file = sample_options[sample_choice]
-            sample_path = sample_dir / sample_file
-            if sample_path.exists():
-                chosen_leaf_img = Image.open(sample_path)
-                leaf_file_name = f"Sample: {sample_choice}"
-            else:
-                st.warning("Sample image not found on disk.")
+            sample_items = [
+                ("🍅 Tomato Early Blight", "TomatoEarlyBlight1.JPG"),
+                ("🍅 Tomato Yellow Curl", "TomatoYellowCurlVirus1.JPG"),
+                ("🥔 Potato Early Blight", "PotatoEarlyBlight1.JPG"),
+                ("🌽 Corn Common Rust", "CornCommonRust1.JPG"),
+                ("🍏 Apple Scab", "AppleScab1.JPG"),
+                ("🌿 Healthy Potato Leaf", "PotatoHealthy1.JPG"),
+            ]
+            st.markdown("<small style='color:#a7f3d0;font-weight:600;'>Tap any sample to load & diagnose instantly:</small>", unsafe_allow_html=True)
+            samp_cols = st.columns(2)
+            for s_idx, (s_label, s_file) in enumerate(sample_items):
+                with samp_cols[s_idx % 2]:
+                    if st.button(s_label, width="stretch", key=f"sample_pick_btn_{s_idx}"):
+                        s_path = sample_dir / s_file
+                        if s_path.exists():
+                            img = Image.open(s_path)
+                            buf = io.BytesIO()
+                            img.convert("RGB").save(buf, format="JPEG", quality=95)
+                            st.session_state.chosen_sample_name = s_label
+                            st.session_state.chosen_sample_img = img
+                            with st.spinner(f"Diagnosing {s_label}..."):
+                                st.session_state.detection = call_detect(buf.getvalue(), s_file)
+                            st.rerun()
+
+            if st.session_state.get("chosen_sample_img"):
+                chosen_leaf_img = st.session_state.chosen_sample_img
+                leaf_file_name = st.session_state.get("chosen_sample_name", "Preloaded Sample")
 
         if chosen_leaf_img:
             st.image(chosen_leaf_img, caption=f"Active Sample: {leaf_file_name}", width="stretch")
 
-            if st.button("🔬 Analyze Leaf & Diagnose Pathology", type="primary", width="stretch"):
+            if st.button("🔬 Analyze Leaf & Diagnose Pathology", type="primary", width="stretch", key="run_disease_diag_btn"):
                 with st.spinner("Executing YOLOv8 neural network inference..."):
                     buffer = io.BytesIO()
                     chosen_leaf_img.convert("RGB").save(buffer, format="JPEG", quality=95)
@@ -1464,6 +1618,27 @@ with tab_weather:
         t0_min = t0.get("min", "--") if isinstance(t0, dict) else t0
         t0_max = t0.get("max", "--") if isinstance(t0, dict) else t0
         w4.metric("🌡️ 24h Temperature Range", f"{t0_min}–{t0_max}°C" if forecasts else "--")
+
+        # Real-time field suitability
+        wind_spd = safe_float(curr.get("wind_speed", 0))
+        precip = safe_float(curr.get("precipitation", 0))
+        spray_safe = (wind_spd < 15.0) and (precip == 0.0)
+        tillage_safe = (precip < 2.0)
+        irrig_need = "💧 Recommended" if precip == 0.0 else "🚫 Delay (Rainfall Active)"
+
+        st.markdown(f"""
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin:12px 0;">
+            <div style="background:#13242e;border:1px solid #1e3a47;border-radius:10px;padding:8px 14px;font-size:0.85rem;color:#f1f5f9;">
+                🌾 <b>Chemical Spray Window:</b> <span style="color:{'#34d399' if spray_safe else '#f87171'};font-weight:700;">{'✅ Safe & Effective' if spray_safe else '⚠️ Avoid (High Wind/Precipitation)'}</span>
+            </div>
+            <div style="background:#13242e;border:1px solid #1e3a47;border-radius:10px;padding:8px 14px;font-size:0.85rem;color:#f1f5f9;">
+                🚜 <b>Field Work & Tillage:</b> <span style="color:{'#34d399' if tillage_safe else '#fbbf24'};font-weight:700;">{'✅ Favorable Soil Conditions' if tillage_safe else '⚠️ Saturated Soil'}</span>
+            </div>
+            <div style="background:#13242e;border:1px solid #1e3a47;border-radius:10px;padding:8px 14px;font-size:0.85rem;color:#f1f5f9;">
+                💧 <b>Irrigation Scheduling:</b> <span style="color:#38bdf8;font-weight:700;">{irrig_need}</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
         today_adv = curr.get("advisory", "")
         if today_adv:

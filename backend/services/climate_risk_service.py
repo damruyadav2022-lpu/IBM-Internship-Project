@@ -170,7 +170,7 @@ class ClimateRiskService:
         }
         url = f"https://api.open-meteo.com/v1/forecast?{urllib.parse.urlencode(params)}"
         req = urllib.request.Request(url, headers={"User-Agent": "KrishiRakshak/1.0"})
-        with urllib.request.urlopen(req, timeout=8) as resp:
+        with urllib.request.urlopen(req, timeout=2.5) as resp:
             return json.loads(resp.read().decode())
 
     def assess_crop_climate_risk(
