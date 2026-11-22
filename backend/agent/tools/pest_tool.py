@@ -75,43 +75,54 @@ def _detect_crop(query: str, pests_by_crop: dict) -> Optional[str]:
 
 
 def _format_pest_advice(crop: str, pest: Dict[str, Any]) -> str:
-    """Format single pest diagnosis and remedy card cleanly."""
+    """Format single pest diagnosis and remedy card in rich, detailed ChatGPT style."""
     p_name = pest.get("pest_name", "")
     p_hi = pest.get("hindi_name", "")
     p_type = pest.get("type", "Disease / Pest")
     stage = pest.get("affected_stage", "All Stages")
     symptoms = pest.get("symptoms", "")
+    conditions = pest.get("favorable_conditions", "")
     organic = pest.get("organic_remedies", [])
     chemical = pest.get("chemical_remedies", [])
     prevention = pest.get("prevention", [])
     etl = pest.get("economic_threshold", "")
 
     lines = [
-        f"🐛 **{crop} — {p_name} ({p_hi}) नियंत्रण मार्गदर्शिका**",
+        f"🌾 **{crop} — {p_name} ({p_hi}) संपूर्ण वैज्ञानिक प्रबंधन गाइड**",
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        f"📋 **रोग/कीट का प्रकार**: `{p_type}` | **प्रभावित फसल अवस्था**: `{stage}`",
         "",
-        f"🎯 **रोग/कीट पहचान एवं लक्षण ({stage})**:",
+        "🔍 **१. लक्षण एवं क्षति की पहचान (Detailed Symptoms)**:",
         f"• {symptoms}",
     ]
+    if conditions:
+        lines.append(f"• 🌡️ **अनुकूल मौसमी परिस्थितियां**: {conditions}")
 
     if organic:
-        lines.append("\n🌿 **जैविक व देसी रोकथाम (Organic & IPM)**:")
-        for o in organic[:3]:
-            lines.append(f"• {o}")
+        lines.append("\n🌿 **२. जैविक व एकीकृत कीट प्रबंधन (Organic & Bio-Control IPM)**:")
+        for o in organic:
+            lines.append(f"• **जैविक उपचार**: {o}")
 
     if chemical:
-        lines.append("\n💊 **रासायनिक नियंत्रण एवं सही मात्रा (Chemical Treatment)**:")
-        for c in chemical[:2]:
-            lines.append(f"• {c}")
+        lines.append("\n💊 **३. अनुशंसित रासायनिक नियंत्रण एवं सटीक खुराक (Chemical Control & Dosages)**:")
+        for idx, c in enumerate(chemical, 1):
+            lines.append(f"• **विकल्प {idx}**: {c}")
+        lines.append("• 💧 **पानी की मात्रा**: प्रति एकड़ 150 से 200 लीटर साफ पानी में घोलकर फ्लैट-फैन नोजल (Flat-fan nozzle) से छिड़काव करें।")
 
     if prevention:
-        lines.append("\n🛡️ **सावधानी एवं बचाव उपाय**:")
-        for p in prevention[:2]:
+        lines.append("\n🛡️ **४. सस्य क्रियाएं एवं बचाव उपाय (Cultural & Preventive Management)**:")
+        for p in prevention:
             lines.append(f"• {p}")
 
     if etl and etl != "N/A":
-        lines.append(f"\n⚠️ **आर्थिक क्षति स्तर (ETL)**: {etl}")
+        lines.append(f"\n⚠️ **५. आर्थिक क्षति स्तर (Economic Threshold Level - ETL)**:\n• {etl}")
 
-    lines.append("\n💡 **किसान सलाह**: छिड़काव हमेशा मौसम साफ होने पर और दोपहर बाद शाम के समय करें। सही नोजल का उपयोग करें।")
+    lines.append(
+        "\n💡 **६. कृषि वैज्ञानिक विशेष सलाह एवं सावधानियां (Expert Pro-Tips)**:\n"
+        "• छिड़काव हमेशा सुबह ओस सूखने के बाद या दोपहर 3 बजे के बाद शाम के समय करें। तेज धूप या तेज हवा में कभी छिड़काव न करें।\n"
+        "• एक ही रसायन का बार-बार छिड़काव न करें, कीटनाशकों/फफूंदनाशकों के वर्ग को बदलकर उपयोग करें ताकि कीटों में प्रतिरोधक क्षमता न बने।\n"
+        "• फसल कटाई से कम से कम 15–20 दिन पहले रासायनिक छिड़काव पूर्णतः बंद कर दें (सुरक्षित प्रतीक्षा अवधि)।"
+    )
     return "\n".join(lines)
 
 

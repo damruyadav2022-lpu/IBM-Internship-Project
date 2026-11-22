@@ -70,7 +70,7 @@ def _resolve_config():
             os.environ["LLM_BASE_URL"] = base_url
 
     temperature = float(os.getenv("LLM_TEMPERATURE", "0.3"))
-    max_tokens = int(os.getenv("LLM_MAX_TOKENS", "1024"))
+    max_tokens = int(os.getenv("LLM_MAX_TOKENS", "2048"))
 
     return provider, api_key, model, base_url, temperature, max_tokens
 

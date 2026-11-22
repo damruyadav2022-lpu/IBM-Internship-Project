@@ -72,6 +72,10 @@ def add_documents(documents: List[Document]) -> None:
 
 
 def similarity_search(query: str, k: int = 4) -> List[Document]:
-    """Run similarity search and return top-k documents."""
-    vs = get_vectorstore()
-    return vs.similarity_search(query, k=k)
+    """Run similarity search and return top-k documents safely."""
+    try:
+        vs = get_vectorstore()
+        return vs.similarity_search(query, k=k)
+    except Exception as e:
+        logger.warning(f"ChromaDB similarity search fallback: {e}")
+        return []
