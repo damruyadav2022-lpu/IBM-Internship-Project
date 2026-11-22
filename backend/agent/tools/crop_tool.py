@@ -61,8 +61,8 @@ def _detect_season(query: str) -> Optional[str]:
     return None
 
 
-def _format_single_crop(crop: Dict[str, Any], season_name: str) -> str:
-    """Format a single crop's agronomic profile cleanly and concisely."""
+def _format_single_crop(crop: Dict[str, Any], season_name: str, is_irrigation: bool = False) -> str:
+    """Format a single crop's agronomic profile or irrigation schedule cleanly."""
     name_eng = crop.get("name", "")
     name_hi = crop.get("hindi_name", "")
     varieties = ", ".join(crop.get("key_varieties", [])[:3])
@@ -71,6 +71,21 @@ def _format_single_crop(crop: Dict[str, Any], season_name: str) -> str:
     yield_val = crop.get("expected_yield_per_acre", "N/A")
     duration = crop.get("growing_period_days", "N/A")
     tip = crop.get("planting_tips", "")
+
+    if is_irrigation and "wheat" in name_eng.lower():
+        return (
+            f"🌾 **{name_eng} ({name_hi}) — सिंचाई प्रबंधन एवं सही समय**\n\n"
+            f"🎯 **पहली सिंचाई (CRI अवस्था — सर्वाधिक महत्वपूर्ण)**:\n"
+            f"• **सही समय**: बुवाई के **20 से 25 दिन बाद** (Crown Root Initiation).\n"
+            f"• **महत्व**: यह गेहूं की सबसे संवेदनशील अवस्था है। देरी होने पर कल्ले कम फूटते हैं और पैदावार 30-40% तक घट जाती है।\n\n"
+            f"📌 **गेहूं की प्रमुख 5 सिंचाई अवस्थाएं**:\n"
+            f"• 1. **CRI अवस्था (शिखर जड़)**: 20–25 दिन बाद (पहला पानी)\n"
+            f"• 2. **कल्ले फूटने के समय (Tillering)**: 40–45 दिन बाद (दूसरा पानी)\n"
+            f"• 3. **गांठ बनने पर (Jointing)**: 60–65 दिन बाद (तीसरा पानी)\n"
+            f"• 4. **फूल आने पर (Flowering)**: 80–85 दिन बाद (चौथा पानी)\n"
+            f"• 5. **दूधिया अवस्था (Milking)**: 100–105 दिन बाद (पांचवां पानी)\n\n"
+            f"💡 **किसान सलाह**: पहली सिंचाई हल्की करें। सिंचाई के 2–3 दिन बाद जब पैर टिकने लगे, तब यूरिया (65 किग्रा/एकड़) की पहली टॉप-ड्रेसिंग करें।"
+        )
 
     return (
         f"🌱 **{name_eng} ({name_hi}) — कृषि मार्गदर्शिका ({season_name} सीजन)**\n\n"
@@ -91,6 +106,8 @@ def get_crop_recommendation(query: str) -> str:
     try:
         data = _load_crop_data()
         seasons = data.get("seasons", {})
+        q_lower = query.lower()
+        is_irrigation = any(kw in q_lower for kw in ["सिंचाई", "पानी", "irrigation", "water", "पहला पानी", "सींच"])
 
         # 1. Check if user is asking about a specific crop
         specific_crop_key = _detect_specific_crop(query)
@@ -101,7 +118,7 @@ def get_crop_recommendation(query: str) -> str:
                     c_hi_lower = c.get("hindi_name", "").lower()
                     aliases = CROP_ALIASES.get(specific_crop_key, [specific_crop_key])
                     if any(a in c_name_lower or a in c_hi_lower for a in aliases):
-                        return _format_single_crop(c, s_name)
+                        return _format_single_crop(c, s_name, is_irrigation=is_irrigation)
 
         # 2. Season-based recommendations
         season = _detect_season(query)

@@ -155,26 +155,39 @@ def _classify_primary_intent(query: str) -> str:
     if any(k in q for k in weather_keywords):
         return "weather"
 
-    # 3. Pest / Disease / Spray Intent
+    # 3. Pest / Disease / Spray / Cure Intent (High Priority)
     pest_keywords = [
-        "pest", "insect", "disease", "spray", "pesticide", "fungus", "blight", "rust", "keet", "keda", "bimari", "rog",
-        "कीट", "कीड़ा", "रोग", "बीमारी", "झुलसा", "जंग", "धब्बा", "दवा", "कीटनाशक", "स्प्रे", "फफूंद", "कीड", "अळी",
-        "ਕੀੜੇ", "ਬਿਮਾਰੀ", "ਸਪਰੇਅ", "ਕੀਟਨਾਸ਼ਕ", "ਕੁੰਗੀ", "ਤੇਲਾ", "ਝੁਲਸਾ", "পোকা", "রোগ", "কীটনাশক", "తెగులు", "పురుగు",
-        "பூச்சி", "நோய்", "જીવાત", "ઇયળ", "ರೋಗ", "ಹುಳು", "കീടങ്ങൾ", "کیڑے", "سپرے"
+        "pest", "insect", "disease", "spray", "pesticide", "fungus", "blight", "rust", "curl", "bollworm", "aphid",
+        "whitefly", "termite", "keet", "keda", "bimari", "rog", "leaf curl", "wilt", "rot", "borer",
+        "कीट", "कीड़ा", "रोग", "बीमारी", "झुलसा", "जंग", "धब्बा", "दवा", "दवाई", "कीटनाशक", "स्प्रे", "फफूंद", "कीड", "अळी",
+        "कुंगी", "रस्ट", "रतुआ", "पीला रतुआ", "पीली कुंगी", "सुंडी", "गुलाबी सुंडी", "इल्ली", "सूंड़ी", "दीमक",
+        "माहू", "चेपा", "तेला", "सफेद मक्खी", "ब्लास्ट", "खैरा", "सड़न", "उकठा", "रोकथाम", "इलाज", "उपचार", "नियंत्रण",
+        "उपाय", "बचाव", "पत्ती मुड़ना", "पत्ता मरोड़", "लीफ कर्ल", "मरोड़िया",
+        "ਕੀੜੇ", "ਬਿਮਾਰੀ", "ਸਪਰੇਅ", "ਕੀਟਨਾਸ਼ਕ", "ਕੁੰਗੀ", "ਤੇਲਾ", "ਝੁਲਸਾ", "ਸੁੰਡੀ", "ਇਲਾਜ", "ਰੋਕਥਾਮ",
+        "পোকা", "রোগ", "কীটনাশক", "తెగులు", "పురుగు", "నివారణ", "பூச்சி", "நோய்", "જીવાત", "ઇયળ", "ರೋಗ", "ಹುಳು", "കീടങ്ങൾ", "کیڑے", "سپرے"
     ]
     if any(k in q for k in pest_keywords):
         return "pest_disease"
 
     # 4. Soil / Fertilizer / Nutrient Intent
     soil_keywords = [
-        "soil", "fertilizer", "urea", "dap", "mop", "npk", "khad", "zinc", "potash", "nitrogen", "soil health", "soil test",
-        "खाद", "उर्वरक", "यूरिया", "मिट्टी", "डीएपी", "पोटाश", "जिंक", "खत", "माती", "ਖਾਦ", "ਯੂਰੀਆ", "ਮਿੱਟੀ", "ਡੀਏਪੀ",
+        "soil", "fertilizer", "urea", "dap", "mop", "npk", "khad", "zinc", "potash", "nitrogen", "soil health", "soil test", "dose",
+        "खाद", "उर्वरक", "यूरिया", "मिट्टी", "डीएपी", "पोटाश", "जिंक", "खत", "माती", "एनपीके", "गोबर", "खुराक", "मात्रा",
+        "कब डालें", "कितना डालें", "अनुपात", "ਖਾਦ", "ਯੂਰੀਆ", "ਡੀਏਪੀ", "ਮਾਤਰਾ", "ਖੁਰਾਕ",
         "সার", "ইউরিয়া", "মাটি", "ఎరువు", "యూరియా", "మట్టి", "உரம்", "ખાતર", "ಗೊಬ್ಬರ", "വളം", "کھاد"
     ]
     if any(k in q for k in soil_keywords):
         return "soil"
 
-    # 5. Climate Risk / Disaster Alert Intent
+    # 5. Irrigation / Watering Intent
+    irrigation_keywords = [
+        "irrigation", "water", "watering", "सिंचाई", "पहला पानी", "पानी", "सींच", "कब सींचें", "कब दें", "कब करें", "पिलाएं",
+        "ਸਿੰਚਾਈ", "ਪਾਣੀ", "সেচ", "నీరు", "பாசனம்", "પિયત"
+    ]
+    if any(k in q for k in irrigation_keywords):
+        return "crop"
+
+    # 6. Climate Risk / Disaster Alert Intent
     risk_keywords = [
         "risk", "alert", "warning", "drought", "flood", "heat stress", "frost", "cold wave", "waterlogging",
         "जोखिम", "चेतावनी", "अलर्ट", "सूखा", "बाढ़", "पाला", "तुषार", "लू", "अतिवृष्टि", "ਧੋਕਾ", "ਖ਼ਤਰਾ", "ਚੇਤਾਵਨੀ", "ਸੋਕਾ"
@@ -182,13 +195,22 @@ def _classify_primary_intent(query: str) -> str:
     if any(k in q for k in risk_keywords):
         return "climate_risk"
 
-    # 6. Crop Sowing / Variety / Cultivation Guide Intent
+    # 7. Crop Sowing / Variety / Cultivation Guide Intent
     crop_keywords = [
         "variety", "sowing", "seed", "crop", "beej", "plant", "yield", "season", "kharif", "rabi", "zaid",
-        "किस्म", "बोने", "बीज", "पैदावार", "फसल", "रबी", "खरीफ", "ਕਿਸਮ", "ਬੀਜ", "ਫਸਲ", "রবী", "খরিফ",
-        "విత్తనాలు", "పంట", "விதை", "பயிர்", "બિયારણ", "પાક", "ಬೆಳೆ", "വിള", "فصل"
+        "किस्म", "बोने", "बीज", "पैदावार", "फसल", "रबी", "खरीफ", "उपज", "समय", "दूरी", "बुवाई", "कटाई",
+        "ਕਿਸਮ", "ਬੀਜ", "ਫਸਲ", "ਰਬੀ", "ਬਿਜਾਈ", "রবী", "খরিফ", "విత్తనాలు", "పంట", "விதை", "பயிர்", "બિયારણ", "પાક", "ಬೆಳೆ", "വിള", "فصل"
     ]
     if any(k in q for k in crop_keywords):
+        return "crop"
+
+    # 8. Check if ANY crop name is mentioned directly
+    common_crops = [
+        "wheat", "rice", "cotton", "tomato", "potato", "mustard", "maize", "chickpea",
+        "गेहूं", "धान", "चावल", "कपास", "टमाटर", "आलू", "सरसों", "मक्का", "चना",
+        "ਕਣਕ", "ਝੋਨਾ", "ਕਪਾਹ", "ਟਮਾਟਰ", "ਸਰ੍ਹੋਂ", "ਗੰਨਾ", "sugarcane"
+    ]
+    if any(c in q for c in common_crops):
         return "crop"
 
     return "general"
@@ -353,7 +375,18 @@ def run_agent(
             logger.error(f"LLM synthesis error: {e}")
 
     # 4. Smart Clean Fallback (when no LLM key is configured)
-    # Never dump raw telemetry; deliver structured, clean advice
+    # If no output matched primary slot, attempt fallback lookup across domain databases
+    if not tool_outputs:
+        p_fallback = get_pest_info(message)
+        if "No specific pest data" not in p_fallback and "उपलब्ध नहीं" not in p_fallback:
+            tool_outputs.append(p_fallback)
+            sources.append("pest_disease_control")
+        else:
+            c_fallback = get_crop_recommendation(message)
+            if "not found" not in c_fallback.lower():
+                tool_outputs.append(c_fallback)
+                sources.append("crop_recommendation")
+
     if tool_outputs:
         clean_data = tool_outputs[0].strip()
 

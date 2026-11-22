@@ -121,6 +121,8 @@ def get_llm() -> BaseLanguageModel:
         openai_api_key=api_key,
         temperature=temperature,
         max_tokens=max_tokens,
+        max_retries=1,
+        request_timeout=8.0,
     )
     if base_url:
         kwargs["openai_api_base"] = base_url
