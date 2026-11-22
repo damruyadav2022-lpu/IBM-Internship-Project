@@ -378,3 +378,60 @@ async def voice_assistant_pipeline(
     except Exception as e:
         logger.error(f"Voice assistant pipeline error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── Soil Health Card (SHC) & PAU Fertilizer Planning ─────────────────────────
+@router.post("/soil-health/parse", tags=["Soil Health"])
+async def parse_soil_health(
+    file: Optional[UploadFile] = File(None),
+    sample_key: Optional[str] = None,
+):
+    """
+    Digitize / OCR a Soil Health Card photo or load a Punjab regional profile.
+    Returns editable table parameters for N, P, K, pH, EC, OC, and micronutrients.
+    """
+    try:
+        from services.soil_health_service import get_soil_health_service
+
+        srv = get_soil_health_service()
+        img_bytes = None
+        fname = "shc_card.jpg"
+        if file is not None:
+            img_bytes = await file.read()
+            fname = file.filename or "shc_card.jpg"
+
+        return srv.parse_soil_health_card(
+            image_bytes=img_bytes,
+            filename=fname,
+            preloaded_key=sample_key,
+        )
+    except Exception as e:
+        logger.error(f"Soil Health parse error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/soil-health/fertilizer-plan", tags=["Soil Health"])
+async def generate_fertilizer_plan(request: dict):
+    """
+    Generate PAU / ICAR calibrated fertilizer recommendations with
+    dosage per acre, split schedule, cost estimate, and multi-lingual explanation.
+    """
+    try:
+        from services.soil_health_service import get_soil_health_service
+
+        srv = get_soil_health_service()
+        crop = request.get("crop", "Wheat")
+        soil_values = request.get("soil_values", {})
+        land_acres = float(request.get("land_acres", 1.0))
+        language = request.get("language", "English")
+
+        return srv.generate_fertilizer_plan(
+            crop=crop,
+            soil_values=soil_values,
+            land_acres=land_acres,
+            language=language,
+        )
+    except Exception as e:
+        logger.error(f"Fertilizer plan error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+

@@ -267,6 +267,20 @@ class DataLoader:
                     page_content=f"Soil testing advice: {health['soil_testing_advice']}",
                     metadata={"source": "Soil Health Guide", "type": "soil_health"},
                 ))
+            # PAU Punjab fertilizer recommendations
+            pau_rules = data.get("pau_punjab_fertilizer_guidelines", {})
+            for c_key, c_info in pau_rules.items():
+                content = (
+                    f"Punjab Agricultural University (PAU) Fertilizer Guidelines for {c_info.get('crop')}: "
+                    f"Package: {c_info.get('pau_package')}. "
+                    f"Base recommendation per acre: {c_info.get('base_dose_per_acre')}. "
+                    f"Split application schedule: {c_info.get('split_timing')}. "
+                    f"Soil test adjustments: {c_info.get('soil_test_adjustments')}."
+                )
+                docs.append(Document(
+                    page_content=content,
+                    metadata={"source": c_info.get("pau_package", "PAU Ludhiana"), "crop": c_key, "type": "pau_fertilizer"},
+                ))
             logger.info(f"Loaded {len(docs)} soil documents.")
         except Exception as e:
             logger.error(f"Failed to load soil data: {e}")

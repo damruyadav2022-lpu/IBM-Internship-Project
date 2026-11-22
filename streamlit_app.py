@@ -494,6 +494,9 @@ if "language" not in st.session_state: st.session_state.language = "English"
 if "location" not in st.session_state: st.session_state.location = "Delhi"
 if "detection" not in st.session_state: st.session_state.detection = None
 if "voice_chat_history" not in st.session_state: st.session_state.voice_chat_history = []
+if "shc_data" not in st.session_state: st.session_state.shc_data = None
+if "shc_plan" not in st.session_state: st.session_state.shc_plan = None
+if "shc_audio" not in st.session_state: st.session_state.shc_audio = None
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -668,6 +671,55 @@ def call_tts(text: str, language: str = "English") -> bytes:
         return generate_speech(text, language=language)
     except Exception:
         return b""
+
+def call_parse_soil_health(image_bytes: Optional[bytes] = None, filename: str = "shc.jpg", sample_key: Optional[str] = None) -> dict:
+    if is_backend_online() and image_bytes:
+        try:
+            params = {"sample_key": sample_key} if sample_key else {}
+            r = requests.post(
+                f"{API_URL}/soil-health/parse",
+                files={"file": (filename, image_bytes, "image/jpeg")},
+                params=params,
+                timeout=25,
+            )
+            if r.status_code == 200:
+                return r.json()
+        except Exception:
+            pass
+    try:
+        sys.path.insert(0, str(ROOT / "backend"))
+        from services.soil_health_service import get_soil_health_service
+        return get_soil_health_service().parse_soil_health_card(
+            image_bytes=image_bytes,
+            filename=filename,
+            preloaded_key=sample_key
+        )
+    except Exception as e:
+        return {"success": False, "error": str(e), "records": []}
+
+def call_generate_fertilizer_plan(crop: str, soil_values: dict, land_acres: float = 1.0, language: str = "English") -> dict:
+    if is_backend_online():
+        try:
+            r = requests.post(
+                f"{API_URL}/soil-health/fertilizer-plan",
+                json={"crop": crop, "soil_values": soil_values, "land_acres": land_acres, "language": language},
+                timeout=20,
+            )
+            if r.status_code == 200:
+                return r.json()
+        except Exception:
+            pass
+    try:
+        sys.path.insert(0, str(ROOT / "backend"))
+        from services.soil_health_service import get_soil_health_service
+        return get_soil_health_service().generate_fertilizer_plan(
+            crop=crop,
+            soil_values=soil_values,
+            land_acres=land_acres,
+            language=language
+        )
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -859,11 +911,12 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
-tab_chat, tab_voice, tab_risk, tab_disease, tab_weather, tab_market = st.tabs([
+tab_chat, tab_voice, tab_risk, tab_disease, tab_soil, tab_weather, tab_market = st.tabs([
     "💬 AI Advisor",
     "🎙️ AI Voice Assistant",
     "🛡️ Climate Risk & Alerts",
     "🔬 Plant Pathology (YOLOv8)",
+    "🧪 Soil Health & Fertilizer (PAU)",
     "🌤️ Real-Time Weather",
     "💰 Mandi Prices (APMC Live)",
 ])
@@ -1790,7 +1843,244 @@ with tab_disease:
 
 
 # ════════════════════════════════════════════════════════════════════════
-# TAB 5 — Real-Time Weather (Open-Meteo)
+# TAB 5 — Soil Health Card (SHC) & PAU Fertilizer Planner
+# ════════════════════════════════════════════════════════════════════════
+with tab_soil:
+    st.markdown("### 🧪 Soil Health Card (SHC) Scanner & PAU Fertilizer Planner")
+    st.caption("ਭਾਰਤ ਸਰਕਾਰ ਸੋਇਲ ਹੈਲਥ ਕਾਰਡ • Punjab Agricultural University (PAU) Ludhiana & ICAR Scientific Calibration • Pilot Region: Punjab")
+
+    # Step A: Card Input Selection
+    c_shc_src1, c_shc_src2 = st.columns([1, 1], gap="medium")
+
+    with c_shc_src1:
+        st.markdown("#### 📄 1. Upload Soil Health Card (Photo / PDF)")
+        uploaded_shc = st.file_uploader(
+            "Upload Government Soil Health Card photo or PDF:",
+            type=["jpg", "jpeg", "png", "webp", "pdf"],
+            key="shc_file_uploader",
+            help="Supports high-res photos of Soil Health Cards or downloaded PDF lab reports",
+        )
+        if uploaded_shc:
+            st.image(uploaded_shc, caption=f"Uploaded SHC: {uploaded_shc.name}", width=280)
+            if st.button("🔍 OCR & Digitize Soil Parameters", type="primary", key="btn_ocr_shc"):
+                with st.spinner("Executing OCR & extracting soil chemistry indicators..."):
+                    shc_bytes = uploaded_shc.getvalue()
+                    st.session_state.shc_data = call_parse_soil_health(
+                        image_bytes=shc_bytes,
+                        filename=uploaded_shc.name,
+                    )
+                    st.session_state.shc_plan = None
+                st.rerun()
+
+    with c_shc_src2:
+        st.markdown("#### 🏛️ Or Test with Punjab Regional Survey Profiles")
+        st.caption("Preloaded soil survey data from major agro-climatic zones in Punjab:")
+
+        from services.soil_health_service import PUNJAB_SAMPLE_CARDS
+        sample_keys = list(PUNJAB_SAMPLE_CARDS.keys())
+        chosen_sample = st.selectbox(
+            "Select Punjab Soil Profile:",
+            sample_keys,
+            key="shc_sample_selector",
+        )
+
+        sample_info = PUNJAB_SAMPLE_CARDS[chosen_sample]
+        st.info(f"📍 **{chosen_sample}**\n\n• **Soil Type:** {sample_info['soil_type']}\n• **Agronomic Profile:** {sample_info['notes']}")
+
+        if st.button("📥 Load Selected Punjab Soil Profile", key="btn_load_punjab_shc"):
+            with st.spinner("Loading calibrated soil test values..."):
+                st.session_state.shc_data = call_parse_soil_health(sample_key=chosen_sample)
+                st.session_state.shc_plan = None
+            st.rerun()
+
+    # Step B: Editable Soil Parameters Table
+    if st.session_state.shc_data and st.session_state.shc_data.get("records"):
+        st.divider()
+        st.markdown("#### 📊 2. Soil Health Laboratory Test Values (Editable Table)")
+        st.caption("💡 **Tip:** Review the OCR-extracted values below. You can click directly on any **'Soil Test Value'** cell to correct or adjust it to match your lab report:")
+
+        records = st.session_state.shc_data.get("records", [])
+        df_shc = pd.DataFrame(records)
+
+        # Display editable table
+        edited_df = st.data_editor(
+            df_shc[["Parameter", "Soil Test Value", "Unit", "Rating / Status", "Confidence", "Category"]],
+            disabled=["Parameter", "Unit", "Category", "Confidence"],
+            width="stretch",
+            hide_index=True,
+            key="shc_data_editor_widget",
+        )
+
+        st.divider()
+
+        # Step C: Crop & Farm Configuration
+        st.markdown("#### 🌾 3. Crop Selection & Farm Prescription Settings")
+
+        c_pau1, c_pau2, c_pau3, c_pau4 = st.columns([2, 1, 1, 1])
+        with c_pau1:
+            pau_crops = [
+                "Wheat (ਕਣਕ / गेहूं) — PBW 826 / Unnat PBW 343 / HD 3086",
+                "Paddy / Rice (ਝੋਨਾ / धान) — PR 126 / PR 131",
+                "Basmati Rice (ਬਾਸਮਤੀ / बासमती) — Pusa Basmati 1509 / 1121",
+                "Potato (ਆਲੂ / आलू) — Kufri Pukhraj / Jyoti (Doaba Belt)",
+                "Mustard / Raya (ਸਰ੍ਹੋਂ / सरसों) — RLC 3 / Giriraj",
+                "Maize (ਮੱਕੀ / मक्का) — PMH 1 / PMH 13",
+            ]
+            chosen_pau_crop = st.selectbox("Select Target Crop:", pau_crops, key="pau_crop_select")
+
+        with c_pau2:
+            land_acres = st.number_input("Land Area (Acres):", min_value=0.5, max_value=100.0, value=2.5, step=0.5, key="shc_acres_input")
+
+        with c_pau3:
+            shc_lang = st.selectbox(
+                "Advisory Language:",
+                ["Punjabi (ਪੰਜਾਬੀ)", "Hindi (हिंदी)", "English"],
+                index=0 if st.session_state.language == "Punjabi" else (1 if st.session_state.language == "Hindi" else 2),
+                key="shc_lang_select",
+            )
+
+        with c_pau4:
+            st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+            if st.button("🚀 Calculate Plan", type="primary", width="stretch", key="btn_calc_pau_fert"):
+                from services.soil_health_service import SHC_BENCHMARKS
+                val_dict = {}
+                for idx_row, row in edited_df.iterrows():
+                    param_name = row["Parameter"]
+                    for k, bm in SHC_BENCHMARKS.items():
+                        if bm["name"] == param_name:
+                            val_dict[k] = safe_float(row["Soil Test Value"])
+                            break
+
+                with st.spinner("Computing PAU / ICAR nutrient balance & cost calibration..."):
+                    st.session_state.shc_plan = call_generate_fertilizer_plan(
+                        crop=chosen_pau_crop,
+                        soil_values=val_dict,
+                        land_acres=land_acres,
+                        language=shc_lang,
+                    )
+                    st.session_state.shc_audio = None
+                st.rerun()
+
+    # Step D: Fertilizer Prescription Results Dashboard
+    if st.session_state.get("shc_plan") and st.session_state.shc_plan.get("success"):
+        plan = st.session_state.shc_plan
+        st.divider()
+
+        total_cost = plan.get("total_cost_inr", 0.0)
+        total_saved = plan.get("total_saved_inr", 0.0)
+        acres_num = plan.get("land_acres", 1.0)
+        crop_title = plan.get("crop", "Wheat")
+
+        st.markdown(f"""
+        <div style="background:linear-gradient(135deg, #092a20 0%, #13242e 100%);border:2px solid #10b981;border-radius:16px;padding:1.4rem 1.8rem;margin-bottom:1.5rem;box-shadow:0 8px 24px rgba(16, 185, 129, 0.25);">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+                <div>
+                    <span style="font-size:0.78rem;background:rgba(16,185,129,0.2);color:#34d399;border:1px solid #10b981;padding:3px 10px;border-radius:9999px;font-weight:700;">
+                        🌾 PAU LUDHIANA & ICAR SCIENTIFIC PRESCRIPTION
+                    </span>
+                    <h3 style="margin:6px 0 2px 0;color:#ffffff;font-size:1.5rem;">{crop_title} ({acres_num} Acres)</h3>
+                    <span style="color:#94a3b8;font-size:0.88rem;">Calibrated for Punjab Alluvial & Calcareous Soils</span>
+                </div>
+                <div style="display:flex;gap:20px;align-items:center;">
+                    <div style="text-align:right;">
+                        <span style="font-size:0.8rem;color:#94a3b8;">Estimated Subsidized Cost:</span><br>
+                        <span style="font-size:1.8rem;font-weight:800;color:#38bdf8;">₹{total_cost:,.0f}</span>
+                    </div>
+                    {f'<div style="text-align:right;border-left:1px solid #1e3a47;padding-left:16px;"><span style="font-size:0.8rem;color:#34d399;font-weight:700;">✨ Money Saved:</span><br><span style="font-size:1.8rem;font-weight:800;color:#34d399;">₹{total_saved:,.0f}</span></div>' if total_saved > 0 else ''}
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Tabbed outputs: Doses, Split Schedule, Explanation, Citations
+        shc_out_tabs = st.tabs([
+            "📦 Fertilizer Doses & Quantities",
+            "⏳ Split Application Schedule",
+            "🗣️ Farmer Explanation & Voice Audio",
+            "📌 PAU / ICAR Citations",
+        ])
+
+        with shc_out_tabs[0]:
+            st.markdown("##### 🧪 Required Chemical & Organic Fertilizers")
+            fert_rows = []
+            for f in plan.get("fertilizers", []):
+                fert_rows.append({
+                    "Fertilizer Name": f["name"],
+                    "Dose per Acre": f["dose_per_acre"],
+                    f"Total for {acres_num} Acres": f["total_dose"],
+                    "Estimated Cost (INR)": f["cost_inr"],
+                    "Agronomic Justification": f["reason"],
+                })
+            df_fert = pd.DataFrame(fert_rows)
+            st.dataframe(df_fert, width="stretch", hide_index=True)
+
+            if plan.get("cost_savings"):
+                st.markdown("##### 💡 Cost Savings Analysis")
+                for s in plan["cost_savings"]:
+                    st.success(f"💰 **{s['title']}**: {s['note']} (**Total Saved: ₹{s['amount']:,.0f}**)")
+
+        with shc_out_tabs[1]:
+            st.markdown("##### ⏳ Split Application Timing (PAU Stage-Specific Protocol)")
+            for s in plan.get("splits", []):
+                st.markdown(f"""
+                <div style="background:#112028;border:1px solid #1e3a47;border-left:4px solid #10b981;border-radius:10px;padding:12px 16px;margin-bottom:10px;color:#f1f5f9;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <b style="color:#34d399;font-size:1.05rem;">{s['stage']}</b>
+                        <span style="font-size:0.8rem;color:#38bdf8;font-weight:600;background:rgba(56,189,248,0.15);padding:2px 8px;border-radius:8px;">{s['timing']}</span>
+                    </div>
+                    <div style="margin:8px 0;font-size:0.95rem;"><b>Applied Items:</b> <span style="color:#facc15;">{s['fertilizers']}</span></div>
+                    <small style="color:#cbd5e1;line-height:1.4;display:block;">💡 <b>Farmer Guide:</b> {s['guidance']}</small>
+                </div>
+                """, unsafe_allow_html=True)
+
+        with shc_out_tabs[2]:
+            st.markdown("##### 🗣️ Natural Language Prescription")
+            st.markdown(plan.get("explanation", ""))
+
+            # Voice Audio Prescription
+            st.markdown("<br>", unsafe_allow_html=True)
+            c_vox1, c_vox2 = st.columns([2, 3])
+            with c_vox1:
+                clean_lang_val = "Punjabi" if "Punjabi" in shc_lang else ("Hindi" if "Hindi" in shc_lang else "English")
+                if st.button("🔊 Generate Natural Spoken Audio Advisory", width="stretch", key="btn_gen_shc_audio"):
+                    with st.spinner(f"Synthesizing spoken audio in {clean_lang_val}..."):
+                        st.session_state.shc_audio = call_tts(plan.get("explanation", ""), language=clean_lang_val)
+                    st.rerun()
+
+            if st.session_state.get("shc_audio"):
+                st.markdown(f"**🔊 Spoken Audio Prescription ({clean_lang_val}):**")
+                st.audio(st.session_state.shc_audio, format="audio/mp3", autoplay=True)
+
+        with shc_out_tabs[3]:
+            st.markdown("##### 📌 Scientific Citations & Standard References")
+            for cit in plan.get("citations", []):
+                st.markdown(f"• **{cit}**")
+            st.caption("All recommendations conform to the Punjab Agricultural University (PAU) Department of Soil Science and ICAR-Indian Institute of Wheat & Barley Research (IIWBR).")
+
+            report_txt = f"KRISHIRAKSHAK AI — PAU SOIL HEALTH FERTILIZER PLAN\n"
+            report_txt += f"Target Crop: {crop_title} ({acres_num} Acres)\n"
+            report_txt += f"Estimated Cost: ₹{total_cost:,.0f} | Money Saved: ₹{total_saved:,.0f}\n\n"
+            report_txt += f"--- FERTILIZER DOSES ---\n"
+            for f in plan.get("fertilizers", []):
+                report_txt += f"• {f['name']}: {f['dose_per_acre']} (Total: {f['total_dose']}) - {f['reason']}\n"
+            report_txt += f"\n--- SPLIT APPLICATION SCHEDULE ---\n"
+            for s in plan.get("splits", []):
+                report_txt += f"• {s['stage']} ({s['timing']}): {s['fertilizers']} - {s['guidance']}\n"
+            report_txt += f"\n--- FARMER ADVISORY ---\n"
+            report_txt += plan.get("explanation", "")
+
+            st.download_button(
+                "📥 Export Complete Fertilizer Plan (.txt)",
+                data=report_txt,
+                file_name=f"PAU_Fertilizer_Plan_{acres_num}Acres.txt",
+                mime="text/plain",
+                width="stretch",
+                key="btn_export_shc_plan",
+            )
+
+
+# ════════════════════════════════════════════════════════════════════════
+# TAB 6 — Real-Time Weather (Open-Meteo)
 # ════════════════════════════════════════════════════════════════════════
 with tab_weather:
     st.markdown("### 🌤️ Real-Time Agricultural Weather & 7-Day Forecast")
@@ -1920,7 +2210,7 @@ with tab_weather:
 
 
 # ════════════════════════════════════════════════════════════════════════
-# TAB 6 — Real-Time Mandi Prices (APMC Live)
+# TAB 7 — Real-Time Mandi Prices (APMC Live)
 # ════════════════════════════════════════════════════════════════════════
 with tab_market:
     st.markdown("### 💰 Real-Time Indian APMC Mandi Commodity Rates")

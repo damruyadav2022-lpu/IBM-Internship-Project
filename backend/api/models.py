@@ -122,3 +122,16 @@ class DiseaseDetectionResponse(BaseModel):
     model: str = Field(default="", description="Model filename used")
     message: str = Field(default="", description="Human-readable summary")
     error: Optional[str] = Field(default=None, description="Error message if failed")
+
+
+class SoilHealthPlanRequest(BaseModel):
+    """Request body for generating a PAU/ICAR fertilizer recommendation."""
+
+    crop: str = Field(default="Wheat", description="Target crop for fertilizer plan")
+    soil_values: Dict[str, float] = Field(
+        default_factory=dict,
+        description="SHC nutrient values (N, P, K, pH, EC, OC, Zn, S, etc.)",
+    )
+    land_acres: float = Field(default=1.0, description="Farm size in acres")
+    language: str = Field(default="English", description="Response language (Punjabi, Hindi, English)")
+

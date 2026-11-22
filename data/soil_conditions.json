@@ -230,5 +230,27 @@
       "High": "> 2.0% — Excellent. Maintain with minimum tillage practices"
     },
     "soil_testing_advice": "Get soil tested every 3 years through Soil Health Card scheme (Government of India). Contact your nearest KVK (Krishi Vigyan Kendra)."
+  },
+  "pau_punjab_fertilizer_guidelines": {
+    "wheat": {
+      "crop": "Wheat (ਕਣਕ / गेहूं)",
+      "pau_package": "PAU Package of Practices for Rabi Crops (Wheat 2024-25)",
+      "base_dose_per_acre": "110 kg Urea (50 kg N), 55 kg DAP (25 kg P2O5), 0 kg MOP (if soil K > 280 kg/ha)",
+      "split_timing": "Basal: Full DAP + 1/3rd Urea; 1st irrigation (21-25 days): 1/3rd Urea; 2nd irrigation (45 days): 1/3rd Urea",
+      "soil_test_adjustments": "If soil N is low (<280 kg/ha): increase Urea by 25% (135 kg/acre). If soil P is high (>25 kg/ha): reduce DAP to 25 kg/acre. If soil K is high (>280 kg/ha): OMIT MOP completely to save farmer money. If Zinc < 0.6 ppm: apply 25 kg Zinc Sulfate (21%) at sowing."
+    },
+    "rice": {
+      "crop": "Paddy / Rice (ਝੋਨਾ / धान)",
+      "pau_package": "PAU Package of Practices for Kharif Crops (Rice 2024)",
+      "base_dose_per_acre": "100 kg Urea (50 kg N) for non-basmati, 55 kg Urea for basmati, 27 kg DAP (12 kg P2O5)",
+      "split_timing": "Basal: Full DAP + 1/3rd Urea at last puddling; 21 days after transplanting: 1/3rd Urea; 42 days after transplanting: 1/3rd Urea",
+      "soil_test_adjustments": "Omit MOP if soil K > 280 kg/ha. Apply 25 kg Zinc Sulfate 21% before puddling to prevent Khaira disease."
+    },
+    "potato": {
+      "crop": "Potato (ਆਲੂ / आलू)",
+      "pau_package": "PAU Potato Bulletin (Doaba Belt - Jalandhar/Hoshiarpur)",
+      "base_dose_per_acre": "165 kg Urea (75 kg N), 55 kg DAP (25 kg P2O5), 40 kg MOP (25 kg K2O)",
+      "split_timing": "At planting: Full DAP + Full MOP + Half Urea; At earthing up (30 days): Remaining half Urea"
+    }
   }
 }

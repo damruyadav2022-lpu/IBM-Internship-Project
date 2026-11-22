@@ -25,6 +25,7 @@ from agent.tools.pest_tool import get_pest_tool
 from agent.tools.market_tool import get_market_tool
 from agent.tools.disease_detection_tool import create_disease_tool
 from agent.tools.climate_risk_tool import get_climate_risk_tool
+from agent.tools.soil_tool import get_soil_tool
 
 logger = logging.getLogger(__name__)
 
@@ -103,9 +104,16 @@ def run_agent(
         "disease_info": create_disease_tool(),
         "mandi_price_checker": get_market_tool(),
         "climate_risk_early_warning": get_climate_risk_tool(location),
+        "soil_health_card_fertilizer": get_soil_tool(location),
     }
 
     keyword_map = {
+        "soil_health_card_fertilizer": [
+            "soil", "fertilizer", "urea", "dap", "mop", "npk", "soil health", "soil test",
+            "khad", "urvarak", "zinc", "potash", "phosphorus", "nitrogen", "pau", "ludhiana",
+            "खाद", "उर्वरक", "यूरिया", "मिट्टी", "सॉइल हेल्थ", "डीएपी", "पोटाश", "जिंक",
+            "ਖਾਦ", "ਯੂਰੀਆ", "ਮਿੱਟੀ", "ਸੋਇਲ ਹੈਲਥ", "ਡੀਏਪੀ", "ਪੋਟਾਸ਼", "ਜ਼ਿੰਕ"
+        ],
         "climate_risk_early_warning": [
             "risk", "alert", "warning", "drought", "flood", "heat stress", "frost", "cold wave",
             "heavy rain", "waterlogging", "soil moisture", "lodging", "climate risk", "early warning",
