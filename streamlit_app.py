@@ -1427,7 +1427,29 @@ with tab_voice:
                                 })
                                 st.rerun()
                         else:
-                            st.error(f"Voice recognition error: {stt.get('error', 'No speech detected')}")
+                            err_txt = stt.get('error', 'No speech detected')
+                            if any(x in err_txt.lower() for x in ["401", "invalid", "expired", "api key", "not configured"]):
+                                st.error("🔑 **Groq API Key Expired or Invalid**")
+                                st.markdown(
+                                    """
+                                    <div style="background:rgba(239,68,68,0.12); border:1px solid #ef4444; border-radius:10px; padding:12px; margin-bottom:12px;">
+                                        <b style="color:#f87171;">Voice Whisper transcription requires an active, free Groq API Key.</b><br>
+                                        <span style="font-size:0.88rem; color:#cbd5e1;">Your previous key has expired or is invalid. Generate a free key in 10 seconds at <a href="https://console.groq.com/keys" target="_blank" style="color:#34d399; text-decoration:underline;">console.groq.com/keys</a> and paste it below:</span>
+                                    </div>
+                                    """,
+                                    unsafe_allow_html=True
+                                )
+                                c_k1, c_k2 = st.columns([3, 1])
+                                new_k = c_k1.text_input("Enter Active Groq Key:", type="password", placeholder="gsk_...", key="inline_groq_key_fix")
+                                if c_k2.button("💾 Activate Key", key="btn_activate_inline_key"):
+                                    if new_k.strip():
+                                        st.session_state.user_groq_api_key = new_k.strip()
+                                        os.environ["LLM_API_KEY"] = new_k.strip()
+                                        os.environ["LLM_BASE_URL"] = "https://api.groq.com/openai/v1"
+                                        st.success("API key updated! Please tap the mic again to speak.")
+                                        st.rerun()
+                            else:
+                                st.error(f"Voice recognition error: {err_txt}")
         else:
             st.caption("Native browser microphone requires Streamlit 1.38+. Use prompt chips above or text input.")
 
@@ -1487,7 +1509,20 @@ with tab_voice:
                         })
                         st.rerun()
                 else:
-                    st.error(f"Audio transcription failed: {stt.get('error', 'Unrecognized audio format')}")
+                    err_txt = stt.get('error', 'Unrecognized audio format')
+                    if any(x in err_txt.lower() for x in ["401", "invalid", "expired", "api key", "not configured"]):
+                        st.error("🔑 **Groq API Key Expired or Invalid**")
+                        st.markdown(
+                            """
+                            <div style="background:rgba(239,68,68,0.12); border:1px solid #ef4444; border-radius:10px; padding:12px; margin-bottom:12px;">
+                                <b style="color:#f87171;">Audio Whisper transcription requires an active, free Groq API Key.</b><br>
+                                <span style="font-size:0.88rem; color:#cbd5e1;">Get a free key in 10 seconds at <a href="https://console.groq.com/keys" target="_blank" style="color:#34d399; text-decoration:underline;">console.groq.com/keys</a> and paste it in the left sidebar or in Streamlit Secrets.</span>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
+                    else:
+                        st.error(f"Audio transcription failed: {err_txt}")
 
 
 # ════════════════════════════════════════════════════════════════════════

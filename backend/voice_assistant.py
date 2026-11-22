@@ -132,9 +132,18 @@ def transcribe_audio(
     Supports all major Indian and international languages or auto-detection.
     """
     try:
-        api_key = os.getenv("LLM_API_KEY", "")
+        # Check Streamlit state for user entered API key
+        try:
+            import streamlit as st
+            if hasattr(st, "session_state") and st.session_state.get("user_groq_api_key"):
+                os.environ["LLM_API_KEY"] = st.session_state.user_groq_api_key.strip()
+                os.environ["LLM_BASE_URL"] = "https://api.groq.com/openai/v1"
+        except Exception:
+            pass
+
+        api_key = os.getenv("LLM_API_KEY", "").strip()
         if not api_key or "placeholder" in api_key.lower():
-            raise RuntimeError("LLM_API_KEY is not configured. Please add your Groq API key in Streamlit Cloud Secrets (or .env).")
+            raise RuntimeError("Groq API Key is not configured. Please enter your Groq API key (starts with 'gsk_') in the left sidebar under '🔑 AI API Key' or in Streamlit Cloud Secrets.")
 
         client = _get_whisper_client()
         audio_file = io.BytesIO(audio_bytes)
@@ -160,8 +169,11 @@ def transcribe_audio(
         transcription = client.audio.transcriptions.create(**kwargs)
         return transcription.text.strip()
     except Exception as e:
-        logger.error(f"Whisper transcription failed: {e}")
-        raise RuntimeError(f"Speech transcription failed: {str(e)}")
+        err_str = str(e)
+        logger.error(f"Whisper transcription failed: {err_str}")
+        if "401" in err_str or "invalid_api_key" in err_str.lower() or "expired" in err_str.lower():
+            raise RuntimeError("Groq API Key is expired or invalid (HTTP 401). Please update your key (starts with 'gsk_') in the left sidebar or at https://console.groq.com/keys.")
+        raise RuntimeError(f"Speech transcription failed: {err_str}")
 
 
 def clean_text_for_speech(text: str) -> str:
