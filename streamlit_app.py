@@ -228,10 +228,11 @@ html, body, [class*="css"] {
     max-width: 82%;
     margin-left: auto;
     font-size: 0.95rem;
-    line-height: 1.5;
+    line-height: 1.6;
     border: 1px solid #10b981;
     box-shadow: 0 4px 10px rgba(4, 120, 87, 0.25);
     word-break: break-word;
+    white-space: pre-wrap !important;
 }
 
 .chat-bubble-assistant {
@@ -239,14 +240,15 @@ html, body, [class*="css"] {
     border: 1px solid #1e3a47 !important;
     border-left: 4px solid #10b981 !important;
     color: #f1f5f9 !important;
-    padding: 1rem 1.25rem;
+    padding: 1.1rem 1.35rem;
     border-radius: 4px 20px 20px 20px;
     margin: 0.6rem 0;
-    max-width: 88%;
-    font-size: 0.95rem;
-    line-height: 1.6;
+    max-width: 92%;
+    font-size: 0.96rem;
+    line-height: 1.7;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     word-break: break-word;
+    white-space: pre-wrap !important;
 }
 
 .source-tag {
@@ -523,6 +525,17 @@ def safe_clamp(val, low: float = 0.0, high: float = 1.0) -> float:
     except (ValueError, TypeError):
         return low
 
+def format_chat_content(text: str) -> str:
+    """Format markdown bold and italic tags into clean HTML for chat bubbles."""
+    if not text:
+        return ""
+    import re
+    # Bold **text** -> emerald bold
+    t = re.sub(r'\*\*(.+?)\*\*', r'<b style="color:#34d399;">\1</b>', text)
+    # Italic *text* -> styled italic
+    t = re.sub(r'(?<!\*)\*([^*]+?)\*(?!\*)', r'<i style="color:#cbd5e1;">\1</i>', t)
+    return t
+
 @st.cache_data(ttl=300, show_spinner=False)
 def is_backend_online() -> bool:
     """Detect whether a dedicated FastAPI gateway is active on BACKEND_URL."""
@@ -530,7 +543,7 @@ def is_backend_online() -> bool:
         return False
     try:
         r = requests.get(f"{API_URL}/health", timeout=0.3)
-        return r.status_code == 200
+        return r.status_code == 200 
     except Exception:
         return False
 
@@ -1093,7 +1106,7 @@ with tab_chat:
                         f'</div>'
                         f'<span style="font-size:0.75rem;color:#94a3b8;">Grounded Real-Time Advisory</span>'
                         f'</div>'
-                        f'{msg["content"]}'
+                        f'{format_chat_content(msg["content"])}'
                         f'{sources_section}'
                         f'</div>',
                         unsafe_allow_html=True,
@@ -1349,7 +1362,7 @@ with tab_voice:
                         </div>
                     </div>
                     <div style="margin-bottom:8px;color:#f1f5f9;line-height:1.6;">
-                        {item['response']}
+                        {format_chat_content(item['response'])}
                     </div>
                     {sources_html}
                 </div>

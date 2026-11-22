@@ -1,374 +1,275 @@
-# 🌾 KrishiRakshak (कृषि रक्षक)
-### Next-Generation Autonomous Agricultural Intelligence & Climate Resilience Platform
+# 🌾 KrishiRakshak (कृषि रक्षक • ਕ੍ਰਿਸ਼ੀ ਰੱਖਿਅਕ)
+### Autonomous AI Agent for Smart Farming Advice, RAG & Climate Intelligence
+**Problem Statement No. 9 — AI Agent for Smart Farming Advice**  
+---
 
-[![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.14-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![Streamlit](https://img.shields.io/badge/Frontend-Streamlit%20Dark-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io)
-[![PyTorch](https://img.shields.io/badge/Deep%20Learning-PyTorch%20%2F%20YOLOv8-EE4C2C?logo=pytorch&logoColor=white)](https://ultralytics.com)
-[![LangChain](https://img.shields.io/badge/AI%20Agent-LangChain%20ReAct-1C3C3C?logo=langchain&logoColor=white)](https://langchain.com)
-[![Groq](https://img.shields.io/badge/LLM-Groq%20120B%20Llama-F55036)](https://groq.com)
-[![ChromaDB](https://img.shields.io/badge/VectorDB-ChromaDB-FF6F00)](https://trychroma.com)
-[![Open-Meteo](https://img.shields.io/badge/Live%20Satellite-Open--Meteo%20ERA5-0284C7)](https://open-meteo.com)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+## 📖 1. About the Project
+
+**KrishiRakshak** is an AI-powered agricultural decision-support platform designed for Indian smallholder farmers. Built to solve the grassroots agricultural information gap, KrishiRakshak integrates real-time hydro-meteorological intelligence, live APMC mandi wholesale commodity prices, deep-learning computer vision for plant pathology, and scientific soil health calibration based on **Punjab Agricultural University (PAU Ludhiana)** and **ICAR** research standards.
+
+Farmers can interact naturally in their local language through typed text, spoken voice, or document/image uploads. The platform delivers sub-second, verified recommendations that reduce input costs, prevent disease outbreaks, and boost farm profitability.
 
 ---
 
-## 📌 Executive Summary
+## 🌟 2. Key Features & Tab Breakdown
 
-**KrishiRakshak (कृषि रक्षक)** is an advanced, autonomous agricultural intelligence platform designed to empower smallholder Indian farmers with real-time decision support. Combining **Multimodal Generative AI (Groq 120B)**, **Satellite Remote Sensing (ECMWF ERA5-Land)**, **Edge Computer Vision (YOLOv8)**, and **Multilingual Speech Processing (Whisper AI)**, KrishiRakshak eliminates information asymmetry and protects crops from climate shocks and disease epidemics.
+The system is organized into **7 specialized, interactive modules**:
 
-Unlike static farming applications that rely on hardcoded guidelines, KrishiRakshak delivers:
-1. **Live, zero-mock real-time telemetry**: continuous feeds from Open-Meteo numerical weather predictions and Government of India Agmarknet terminal market auctions.
-2. **Predictive Climate Risk & Early Warning System**: root-zone satellite soil moisture across 4 depths to forecast drought, flood, terminal heat stress, and frost before damage occurs.
-3. **Multilingual Spoken Interaction**: voice recognition and natural speech synthesis in **Hindi (हिंदी)**, **Punjabi (ਪੰਜਾਬੀ)**, and **English**.
-4. **Autonomous Plant Pathology**: sub-15ms YOLOv8 classification across 38 crop disease classes supporting leaf photos and multi-page PDF laboratory diagnostic reports.
-5. **Midnight Forest & Dark Slate UI/UX**: a high-contrast, eye-friendly interface built with Streamlit for clear readability in bright outdoor sunlight or evening field operations.
+### 💬 Tab 1: AI Agricultural Advisor
+* **What it does**: Answers open-ended agronomic questions about crop cycles, fertilizer dosing, weed management, and pest control.
+* **Why it's needed**: Farmers often get generic, ungrounded advice from search engines or chemical retailers.
+* **How it works**: Uses LangChain and Groq LLaMA 3.3 70B with a sub-second domain tool router and ChromaDB RAG knowledge base. Every answer includes a **"🔊 Listen"** voice playback button.
 
----
+### 🎙️ Tab 2: Multilingual AI Voice Assistant
+* **What it does**: A conversational speech-to-speech chatbot allowing non-literate farmers to ask questions verbally.
+* **Why it's needed**: Eliminates typing and language barriers for rural farmers.
+* **How it works**: Audio is transcribed via **Groq Whisper-large-v3** with automatic dialect identification; the agent synthesizes advice and outputs natural spoken audio via **gTTS**.
 
-## 🏛️ System Architecture
+### 🛡️ Tab 3: Climate Risk Predictor & Early Warning System
+* **What it does**: Forecasts climate risks (drought, flood, heat stress, frost, crop lodging) tailored to specific crop growth stages.
+* **Why it's needed**: Sudden climate anomalies cause massive yield losses during critical stages (e.g., heatwaves during wheat grain filling).
+* **How it works**: Ingests **ECMWF ERA5 Satellite Reanalysis** to track root-zone soil moisture ($0\text{--}7\text{ cm}$, $7\text{--}28\text{ cm}$, $28\text{--}100\text{ cm}$) and computes a **Climate Vulnerability Index (CVI, 0–100)** with what-if scenario simulation.
 
-```mermaid
-flowchart TD
-    subgraph Farmer_Inputs ["🧑‍🌾 Multimodal Farmer Inputs"]
-        A1["🗣️ Spoken Voice (Hindi / Punjabi / English)"]
-        A2["💬 Text Queries (Natural Language)"]
-        A3["📸 Leaf Photos (Camera / Drag & Drop)"]
-        A4["📄 PDF Lab Diagnostic Reports"]
-    end
+### 🔬 Tab 4: Plant Pathology (YOLOv8 Vision & PDF Diagnostic OCR)
+* **What it does**: Diagnoses leaf diseases from photos, live camera snaps, or multi-page PDF diagnostic reports.
+* **Why it's needed**: Early detection prevents crop failures.
+* **How it works**: **YOLOv8** executes neural inference ($\approx 25\text{ ms}$) across 38 crop-disease classes. Features **"🎧 Spoken Diagnosis & Voice Output"**, providing biological treatments (Neem, Trichoderma), chemical sprays with exact dosages, and preventive cultural practices.
 
-    subgraph Presentation_Layer ["🖥️ Presentation Layer (Streamlit Dark Theme)"]
-        UI["🌾 KrishiRakshak Unified App (Port 8501)"]
-        T1["Tab 1: 💬 AI Agronomy Advisor"]
-        T2["Tab 2: 🎙️ Multilingual Voice Assistant"]
-        T3["Tab 3: 🛡️ Climate Risk & Alerts"]
-        T4["Tab 4: 🔬 YOLOv8 Plant Pathology"]
-        T5["Tab 5: 🌤️ Real-Time Weather"]
-        T6["Tab 6: 💰 APMC Mandi Rates"]
-        UI --> T1 & T2 & T3 & T4 & T5 & T6
-    end
+### 🧪 Tab 5: Soil Health Card (SHC) Scanner & PAU Fertilizer Planner
+* **What it does**: Scans government Soil Health Cards, digitizes 12 parameters into an editable table, and generates a tailored PAU Ludhiana fertilizer prescription.
+* **Why it's needed**: Prevents blind, excessive fertilizer usage, saving money and protecting soil fertility.
+* **How it works**: Evaluates N, P, K, pH, EC, OC, S, Zn, Fe, Mn, B, and Cu. Omits redundant fertilizers (e.g., omitting MOP if soil potassium is high, saving ₹1,200+/acre) and prescribes a 3-split fertilizer schedule.
 
-    subgraph Backend_Layer ["⚡ Backend API Engine (FastAPI - Port 8000)"]
-        API["FastAPI Routing Gateway (/api)"]
-        AG["🧠 LangChain ReAct Reasoning Agent"]
-        CV["🔬 YOLOv8 Neural Diagnostic Engine"]
-        STT["🎙️ Whisper Speech-to-Text Pipeline"]
-        TTS["🔊 gTTS Neural Audio Synthesizer"]
-        API --> AG & CV & STT & TTS
-    end
+### 🌤️ Tab 6: Real-Time Weather & Agricultural Spray Windows
+* **What it does**: Displays live weather conditions, 7-day agricultural forecasts, and spray-window alerts.
+* **Why it's needed**: Spraying pesticides before rainfall or in high winds ($>15\text{ km/h}$) wastes costly chemicals.
+* **How it works**: Connects directly to the **Open-Meteo ECMWF API** for precision hourly weather, humidity, and precipitation probability.
 
-    subgraph Intelligence_Tools ["🛠️ Agentic Tools & Services"]
-        T_W["🌤️ WeatherService (Open-Meteo API)"]
-        T_M["💰 MandiService (Agmarknet Live Feed)"]
-        T_C["🛡️ ClimateRiskService (ECMWF Satellite)"]
-        T_R["📚 RAG Pipeline (ChromaDB Vector DB)"]
-        T_P["🐛 Pest & Pathology Database"]
-        AG --> T_W & T_M & T_C & T_R & T_P
-    end
-
-    subgraph Data_Feeds ["🌐 Real-Time External Telemetry"]
-        D_SAT["🛰️ ECMWF ERA5-Land (Soil Moisture 0-27cm)"]
-        D_WX["📡 Open-Meteo Global NWP Forecasts"]
-        D_MKT["🏛️ Agmarknet APMC Terminal Markets"]
-        D_LLM["⚡ Groq 120B Fast Inference Cloud"]
-        T_C -.-> D_SAT
-        T_W -.-> D_WX
-        T_M -.-> D_MKT
-        AG -.-> D_LLM
-    end
-
-    Farmer_Inputs --> UI
-    UI <--> API
-```
+### 💰 Tab 7: Real-Time Mandi Prices (APMC Live Feeds & MSP)
+* **What it does**: Displays wholesale prices across Indian APMC mandis, tracking trends and comparing them to Minimum Support Price (MSP) benchmarks.
+* **Why it's needed**: Ensures farmers get fair prices and know whether to sell immediately or store their produce.
+* **How it works**: Ingests official **Agmarknet** feeds with daily trend momentum (Rising ↑, Falling ↓, Stable →) and retail price equivalents.
 
 ---
 
-## 🌟 Key Capabilities & Features
+## 🛠️ 3. Technology Stack
 
-### 1. 🛡️ AI Climate Risk Predictor & Early Warning System
-Predicts agro-climatic threats before crop damage happens using physical satellite observations and crop phenology:
-- **Satellite Root-Zone Soil Moisture**: Real-time volumetric moisture ($m^3/m^3$) extracted from ECMWF Land Surface Models across four physical soil horizons:
-  - Surface ($0–1\text{ cm}$): Topsoil evaporation & seedling emergence.
-  - Seed Zone ($1–3\text{ cm}$): Germination vitality.
-  - Active Root Zone ($3–9\text{ cm}$): Transpiration & nutrient uptake.
-  - Deep Subsoil ($9–27\text{ cm}$): Soil moisture reserve buffer.
-- **Six-Vector Risk Diagnostic**:
-  1. 🏜️ *Drought & Moisture Deficit Risk* (based on root-zone depletion & precipitation anomalies).
-  2. 🌊 *Flood & Waterlogging Hazard* (based on 48h soil saturation & torrential rain forecasts).
-  3. 🌡️ *Terminal Heat Stress Warning* (crop-stage critical threshold exceedance e.g., $>32^\circ\text{C}$ during wheat flowering).
-  4. ❄️ *Frost & Radiative Chilling Warning* (sub-$4^\circ\text{C}$ nocturnal canopy radiative cooling).
-  5. 🌧️ *Heavy Rain & Lodging Hazard* (high wind velocities coupled with sustained rainfall).
-  6. 🦠 *Pathogen & Fungal Epidemic Risk* (relative humidity $>80\%$ paired with optimal incubation temperatures).
-- **Climate Vulnerability Index (CVI, 0–100)**: Unified risk score dynamically rendered with ICAR-backed proactive mitigation protocols (e.g., Potassium Nitrate 1%, Kaolin 5% anti-transpirant foliar sprays, furrow drainage).
-- **14-Day Trajectory**: 7-day historical observation actuals + 7-day prospective forecasts.
+| Layer | Technologies | Purpose |
+| :--- | :--- | :--- |
+| **Frontend** | Streamlit, HTML5, Custom CSS | Modern dark-mode UI ("Midnight Forest"), audio players, and responsive data editors. |
+| **Backend & API** | FastAPI, Pydantic v2, Uvicorn | High-performance asynchronous REST API gateway. |
+| **AI / LLM** | Groq LLaMA 3.3 70B, LangChain | Sub-second agricultural reasoning and real-time data synthesis. |
+| **RAG & Vector DB** | ChromaDB, Sentence-Transformers (`all-MiniLM-L6-v2`) | Embeds and retrieves verified ICAR and PAU agronomic knowledge. |
+| **Computer Vision** | Ultralytics YOLOv8, PyPDFium2, Pillow | Deep-learning leaf classification and multi-page PDF report OCR. |
+| **Speech Processing** | Groq Whisper-large-v3, gTTS | Multilingual Speech-to-Text (STT) and natural Text-to-Speech (TTS). |
+| **Weather & Climate** | Open-Meteo, ECMWF ERA5 | High-resolution satellite root-zone moisture and weather forecasting. |
+| **Market Data** | Agmarknet (Govt. of India) | Real-time APMC mandi wholesale rates and 2024–25 MSP data. |
 
 ---
 
-### 2. 🎙️ Multilingual AI Voice Farming Assistant
-Engineered specifically for farmers who prefer speaking over typing:
-- **Trilingual Speech Recognition**: Full conversational fluency in **Hindi (हिंदी)**, **Punjabi (ਪੰਜਾਬੀ)**, and **English**.
-- **Whisper Speech-to-Text**: High-accuracy automatic speech recognition accommodating regional accents and agricultural dialects.
-- **Agronomy Agent Routing**: Queries are analyzed by our LangChain ReAct agent, cross-referenced with live market/weather tools, and synthesized into actionable advice.
-- **Natural Audio Playback**: Direct text-to-speech audio streaming back to the farmer in their chosen language.
-- **Preset Spoken Prompts**: One-tap sample queries in Devanagari and Gurmukhi for rapid field testing.
+## 🌐 4. Multilingual & Auto-Detection Engine
+
+KrishiRakshak supports **11 languages**:
+1. **English** (`en`)
+2. **Hindi / हिन्दी** (`hi`)
+3. **Punjabi / ਪੰਜਾਬੀ** (`pa`)
+4. **Bengali / বাংলা** (`bn`)
+5. **Telugu / తెలుగు** (`te`)
+6. **Marathi / मराठी** (`mr`)
+7. **Tamil / தமிழ்** (`ta`)
+8. **Gujarati / ગુજરાતી** (`gu`)
+9. **Kannada / ಕನ್ನಡ** (`kn`)
+10. **Malayalam / മലയാളം** (`ml`)
+11. **Urdu / اردو** (`ur`)
+
+### ⚡ Zero-Latency Script Auto-Detection
+Instead of heavy language-detection models, KrishiRakshak uses direct **Unicode codepoint ranges** ($\approx 0\text{ ms}$ latency):
+* **Gurmukhi** (`\u0A00`–`\u0A7F`) $\rightarrow$ Punjabi
+* **Devanagari** (`\u0900`–`\u097F`) $\rightarrow$ Hindi / Marathi
+* **Bengali** (`\u0980`–`\u09FF`) $\rightarrow$ Bengali
+* **Telugu** (`\u0C00`–`\u0C7F`) $\rightarrow$ Telugu
+* **Tamil** (`\u0B80`–`\u0BFF`) $\rightarrow$ Tamil
+* **Gujarati** (`\u0A80`–`\u0AFF`) $\rightarrow$ Gujarati
+* **Kannada** (`\u0C80`–`\u0CFF`) $\rightarrow$ Kannada
+* **Malayalam** (`\u0D00`–`\u0D7F`) $\rightarrow$ Malayalam
+* **Perso-Arabic** (`\u0600`–`\u06FF`) $\rightarrow$ Urdu
 
 ---
 
-### 3. 🔬 Plant Pathology & Autonomous Disease Detection (YOLOv8)
-Provides rapid diagnostic triage and prescriptive agronomic treatments:
-- **38 Disease Classes**: Detects bacterial blights, powdery mildew, yellow rust, leaf curl viruses, scab, and healthy canopy across Apple, Tomato, Potato, Corn, Grape, Pepper, and more.
-- **Multimodal Document & Image Ingestion**:
-  - Drag-and-drop leaf photos (JPEG, PNG, WEBP, BMP).
-  - Multi-page PDF laboratory diagnostic report parsing via `pypdfium2`.
-  - Live device camera snapshots.
-  - Preloaded high-resolution field test samples.
-- **Comprehensive Prescriptions**:
-  - 🍃 **Biological & Organic Control**: Neem oil formulation, *Trichoderma viride*, cow urine spray, biological antagonists.
-  - 💊 **Chemical Spray Protocol**: Precise active ingredients, dosage per acre (e.g., Mancozeb 75% WP @ 2.5g/L, Propiconazole 25% EC), and spray intervals.
-  - 🛡️ **Preventive Agronomics**: Crop rotation schedules, certified seed treatment, furrow aeration.
-  - 🌿 **Pathology Profiles**: Favorable temperatures, relative humidity requirements, and economic impact thresholds.
+## 📁 5. Folder & File Structure
 
----
-
-### 4. 🌤️ 100% Real-Time Weather Intelligence
-- Direct integration with Open-Meteo satellite and numerical weather prediction models.
-- Live current telemetry: ambient temperature, apparent feels-like temperature, relative humidity, wind velocity, and current rainfall.
-- 7-day precision agricultural weather grid with dynamic farming activity advisories (irrigation planning, pesticide spraying windows, harvest safety).
-
----
-
-### 5. 💰 Real-Time APMC Mandi Commodity Rates
-- Live Government of India **Agmarknet** integration across major terminal markets (Delhi Azadpur, Mumbai Vashi, Pune, Ludhiana, Jaipur, Nashik, etc.).
-- Modal prices, minimum/maximum auction rates, and retail equivalents (₹/kg).
-- Daily price gainers, decliners, and stable commodity tracking.
-- Official Government of India **Minimum Support Price (MSP) 2024–25** benchmarks for Rabi and Kharif crops.
-
----
-
-### 6. 🎨 Midnight Forest & Dark Slate Theme UI/UX
-Designed for readability under direct outdoor glare and in low-light rural environments:
-- **Eye-Comfort Dark Palette**: `#0b141a` forest obsidian background paired with `#13242e` dark slate surfaces.
-- **WCAG AAA Contrast**: Crisp `#ffffff` headers, `#e2e8f0` body text, and `#10b981` emerald highlights.
-- **Zero Bright Glare**: Replaced all harsh white and light pastel boxes with dark-tinted indicators.
-- **Responsive Layout**: Adapts smoothly to desktop workstations, tablets, and smartphones.
-
----
-
-## 📂 Project Structure
-
-```
+```text
 KrishiRakshak/
-├── streamlit_app.py             # Main Streamlit Dark Theme Application
-├── requirements.txt             # Unified Python dependencies
-├── docker-compose.yml           # Multi-container Docker deployment
-├── Dockerfile.streamlit         # Streamlit container configuration
-├── .gitignore                   # Version control ignore rules
-├── .env.example                 # Environment variables template
+├── streamlit_app.py             # Main 7-tab Streamlit frontend
+├── requirements.txt             # Project dependencies
+├── .env                         # API keys (Groq key, base URL)
 │
-├── backend/                     # FastAPI Core Backend Engine
-│   ├── main.py                  # Server entrypoint & lifecycle management
-│   ├── Dockerfile               # Backend container configuration
-│   ├── requirements.txt         # Backend-specific dependencies
-│   ├── agent/                   # Autonomous ReAct Agent System
-│   │   ├── farming_agent.py     # LangChain agent with tool routing
-│   │   ├── llm_client.py        # Groq 120B / OpenAI-compatible client
-│   │   ├── rag_pipeline.py      # ChromaDB embeddings & vector search
-│   │   └── tools/               # Specialized domain tools
-│   │       ├── climate_risk_tool.py # Climate risk prediction tool
-│   │       ├── weather_tool.py      # Live weather forecast tool
-│   │       ├── market_tool.py       # APMC mandi price tool
-│   │       ├── crop_tool.py         # Phenology & calendar tool
-│   │       └── pest_tool.py         # Pest & pathogen management tool
-│   ├── api/                     # REST API Layer
-│   │   ├── routes.py            # Endpoints (/chat, /climate-risk, /detect-disease, etc.)
-│   │   └── models.py            # Pydantic request/response schemas
-│   ├── services/                # Business Logic Services
-│   │   ├── climate_risk_service.py  # ECMWF satellite soil & hydro-meteorology
-│   │   ├── weather_service.py       # Open-Meteo live API consumer
-│   │   └── mandi_service.py         # Agmarknet live prices & MSP engine
-│   ├── disease_detector.py      # YOLOv8 neural inference pipeline
-│   └── voice_assistant.py       # Whisper STT & gTTS audio engine
+├── backend/
+│   ├── main.py                  # FastAPI application entry point
+│   ├── voice_assistant.py       # Whisper STT & gTTS audio engine
+│   │
+│   ├── agent/
+│   │   ├── farming_agent.py     # LangChain multi-tool agent & prompt templates
+│   │   ├── llm_client.py        # Groq LLaMA client initializer
+│   │   ├── rag_pipeline.py      # ChromaDB vector retrieval pipeline
+│   │   └── tools/               # Domain tool wrappers
+│   │       ├── soil_tool.py
+│   │       ├── climate_risk_tool.py
+│   │       ├── weather_tool.py
+│   │       ├── crop_tool.py
+│   │       ├── pest_tool.py
+│   │       ├── market_tool.py
+│   │       └── disease_detection_tool.py
+│   │
+│   ├── api/
+│   │   ├── models.py            # Pydantic data schemas
+│   │   └── routes.py            # FastAPI REST endpoints
+│   │
+│   └── services/
+│       ├── soil_health_service.py   # PAU Ludhiana 12-nutrient calibration engine
+│       ├── climate_risk_service.py  # ERA5 satellite & CVI calculator
+│       ├── weather_service.py       # Open-Meteo live observation service
+│       ├── mandi_service.py         # Agmarknet APMC live market service
+│       └── translation_service.py   # Centralized UI & disease translation catalog
 │
-├── data/                        # Agricultural Datasets & Local Telemetry Cache
-│   ├── crop_calendar.json       # ICAR crop calendars (Kharif, Rabi, Zaid)
-│   ├── disease_classes.json     # 38 plant disease profiles & treatments
-│   ├── mandi_prices.json        # APMC market cache & MSP benchmarks
-│   ├── pest_control.json        # IPM pest identification & chemical guides
-│   ├── soil_conditions.json     # Soil types across Indian agro-climatic zones
-│   ├── weather_data.json        # Regional meteorological stations
-│   └── plantvillage/
-│       └── test/test/           # Sample leaf images for instant UI testing
+├── data/
+│   ├── crop_calendar.json       # Sowing and harvesting schedules
+│   ├── disease_database.json    # 38 disease treatments and symptoms
+│   ├── pest_database.json       # Biological & chemical pest solutions
+│   ├── mandi_prices.json        # Benchmark APMC price records
+│   ├── soil_conditions.json     # PAU Ludhiana fertilizer calibration tables
+│   └── plantvillage/test/       # Sample leaf images for instant testing
 │
-├── yolo_weights/                # Deep Learning Weights
-│   └── plant_disease_38cls.pt   # YOLOv8 38-class plant disease weights
-│
-├── chroma_db/                   # Pre-indexed ChromaDB vector knowledge base
-└── docs/                        # Architecture & Technical Documentation
-    └── architecture.md          # In-depth system design & sequence diagrams
+└── scripts/
+    ├── test_soil_health.py      # Automated tests for Soil Health & 7 tabs
+    └── test_multilingual.py     # Automated tests for 11 languages, STT, and TTS
 ```
 
 ---
 
-## ⚡ Quick Start & Installation
+## 📦 6. Requirements & Dependencies
 
-### Option 1: Native Local Setup (Recommended)
+The project uses stable, well-maintained libraries listed in `requirements.txt`:
 
-#### 1. Clone the Repository
+```text
+# Web & UI
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+streamlit>=1.32.0
+requests>=2.31.0
+pandas>=2.1.4
+pydantic>=2.5.3
+pydantic-settings>=2.1.0
+python-dotenv>=1.0.0
+aiofiles>=23.2.1
+python-multipart>=0.0.7
+
+# AI, Agentic Reasoning & Vector Search
+langchain>=0.1.5
+langchain-community>=0.0.17
+langchain-openai>=0.0.5
+openai>=1.10.0
+chromadb>=0.4.22
+sentence-transformers>=2.3.1
+httpx>=0.26.0
+
+# Deep Learning & Computer Vision
+torch>=2.1.0
+torchvision>=0.16.0
+ultralytics>=8.1.0
+Pillow>=10.2.0
+opencv-python-headless>=4.9.0
+pypdfium2>=4.26.0
+
+# Voice Processing
+gTTS>=2.5.0
+```
+
+---
+
+## 🚀 7. Installation & Quick Start
+
+### Step 1: Clone the Repository
 ```bash
 git clone https://github.com/damruyadav2022-lpu/IBM-Internship-Project.git
-cd IBM-Internship-Project
+cd KrishiRakshak
 ```
 
-#### 2. Create and Activate a Virtual Environment
+### Step 2: Set Up Virtual Environment
 ```bash
-# Windows
+# Create virtual environment
 python -m venv .venv
-.venv\Scripts\activate
 
-# Linux / macOS
-python3 -m venv .venv
+# Activate on Windows:
+.\.venv\Scripts\activate
+
+# Activate on Linux / macOS:
 source .venv/bin/activate
 ```
 
-#### 3. Install Dependencies
+### Step 3: Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-#### 4. Configure Environment Variables
-Copy the template file to `.env`:
-```bash
-cp .env.example .env
-```
-Edit `.env` to include your Groq API key:
+### Step 4: Configure Environment Variables
+Create a `.env` file in the root directory:
 ```env
-LLM_PROVIDER=openai
 LLM_API_KEY=gsk_your_groq_api_key_here
-LLM_MODEL=openai/gpt-oss-120b
 LLM_BASE_URL=https://api.groq.com/openai/v1
 ```
+*(Get a free Groq API key at [console.groq.com/keys](https://console.groq.com/keys))*
 
-#### 5. Launch the Platform
-
-**Terminal 1 — Start the FastAPI Backend:**
+### Step 5: Launch the Application
 ```bash
-cd backend
-python -m uvicorn main:app --port 8000 --reload
+streamlit run streamlit_app.py
 ```
-*Backend runs at: `http://localhost:8000` (Docs: `http://localhost:8000/docs`)*
-
-**Terminal 2 — Start the Streamlit Application:**
-```bash
-streamlit run streamlit_app.py --server.port 8501
-```
-*Streamlit UI opens automatically at: `http://localhost:8501`*
+Open your browser at `http://localhost:8501`.
 
 ---
 
-### Option 2: Docker Containerization
+## 🧪 8. Running Automated Tests
 
-Deploy the complete stack in isolated containers with Docker Compose:
+Run the included automated test suites to verify functionality:
 
 ```bash
-docker-compose up --build
-```
-- **Streamlit UI**: `http://localhost:8501`
-- **FastAPI REST API**: `http://localhost:8000`
+# 1. Test Soil Health Card Scanner & 7-Tab Smoke Test
+python scripts/test_soil_health.py
 
----
-
-## 🔌 API Reference & Endpoints
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/chat` | Conversational agronomy reasoning agent (ReAct + RAG) |
-| `GET` | `/api/climate-risk` | Real-time satellite soil moisture & climate threat prediction |
-| `POST` | `/api/detect-disease` | YOLOv8 leaf disease diagnosis (Images or PDF reports) |
-| `POST` | `/api/voice/transcribe` | Whisper speech-to-text for audio recordings |
-| `GET` | `/api/weather` | Open-Meteo live weather & 7-day farming forecasts |
-| `GET` | `/api/mandi-prices` | Agmarknet real-time APMC commodity prices & MSPs |
-| `GET` | `/api/health` | Backend service health and status probe |
-
-### Example cURL: Climate Risk Prediction
-```bash
-curl -X GET "http://localhost:8000/api/climate-risk?location=Ludhiana&crop=wheat&stage=Flowering"
-```
-
-**Response Payload:**
-```json
-{
-  "success": true,
-  "location": "Ludhiana",
-  "crop": "Wheat",
-  "stage": "Flowering",
-  "climate_vulnerability_index": 64,
-  "cvi_status": "HIGH RISK",
-  "satellite_soil_moisture": {
-    "surface_0_to_1cm": 0.092,
-    "seed_zone_1_to_3cm": 0.114,
-    "active_root_3_to_9cm": 0.138,
-    "deep_root_9_to_27cm": 0.165,
-    "status": "MOISTURE DEFICIT"
-  },
-  "active_alerts": [
-    {
-      "type": "Drought & Moisture Stress",
-      "severity": "HIGH RISK",
-      "score": 68,
-      "message": "Satellite root zone soil moisture has dropped to 0.138 m³/m³ during critical flowering stage."
-    }
-  ],
-  "preventive_actions": [
-    "✅ Apply 1% Potassium Nitrate (KNO3) foliar spray to improve osmotic regulation and drought tolerance.",
-    "💧 Provide light microclimate irrigation during evening hours to maintain transpiration buffer."
-  ]
-}
+# 2. Test 11-Language Detection, Whisper STT, gTTS, and Agent Routing
+python scripts/test_multilingual.py
 ```
 
 ---
 
-## 📊 Performance & Technical Metrics
+## ☁️ 9. Deploying to Streamlit Community Cloud
 
-| Component | Metric | Benchmark Performance |
-|---|---|---|
-| **YOLOv8 Disease Classification** | Inference Latency | **11–18 ms** per image (CPU) / **4 ms** (GPU) |
-| **YOLOv8 Classification Accuracy** | Top-1 Accuracy | **98.4%** across 38 crop disease classes |
-| **LangChain ReAct Agent** | Reasoning & Synthesis | **< 1.8 s** via Groq 120B accelerated inference |
-| **Whisper Voice Transcription** | Transcription Latency | **~ 850 ms** for 10-second voice note |
-| **Open-Meteo Weather Sync** | Data Freshness | Real-time global reanalysis (updated hourly) |
-| **Agmarknet Mandi Telemetry** | Market Coverage | 10+ major Indian APMC terminal hubs |
-| **UI Contrast Standard** | Accessibility | **WCAG AAA** compliant dark theme |
-
----
-
-## 🌾 Supported Crops & Disease Scope
-
-| Crop | Supported Conditions & Pathogens |
-|---|---|
-| 🍅 **Tomato** | Early Blight, Late Blight, Leaf Mold, Septoria Leaf Spot, Spider Mites, Target Spot, Yellow Leaf Curl Virus, Mosaic Virus, Healthy |
-| 🥔 **Potato** | Early Blight, Late Blight, Healthy |
-| 🌾 **Wheat** | Yellow Rust, Brown Rust, Powdery Mildew, Loose Smut, Stem Rust, Healthy |
-| 🌽 **Corn / Maize**| Common Rust, Northern Leaf Blight, Cercospora Leaf Spot, Healthy |
-| 🍏 **Apple** | Apple Scab, Black Rot, Cedar Apple Rust, Healthy |
-| 🍇 **Grape** | Black Rot, Esca (Black Measles), Leaf Blight, Healthy |
-| 🫑 **Bell Pepper** | Bacterial Spot, Healthy |
-| 🍓 **Strawberry** | Leaf Scorch, Healthy |
-| 🍑 **Peach** | Bacterial Spot, Healthy |
-| 🍒 **Cherry** | Powdery Mildew, Healthy |
+1. Fork or push this repository to your GitHub account.
+2. Visit [share.streamlit.io](https://share.streamlit.io) and click **"New app"**.
+3. Select your repository, branch (`main`), and main file path (`streamlit_app.py`).
+4. In **Advanced Settings → Secrets**, add:
+   ```toml
+   LLM_API_KEY = "gsk_..."
+   LLM_BASE_URL = "https://api.groq.com/openai/v1"
+   ```
+5. Click **Deploy**.
 
 ---
 
-## 👨‍💻 Project Information & Credits
+## 💡 10. Frequently Asked Questions (Evaluator Cheatsheet)
 
-- **Project**: KrishiRakshak (कृषि रक्षक)
-- **Track**: AI & Machine Learning in Agriculture / Climate Resilience
-- **Developer**: Deepak Kumar Yadav ([@damruyadav2022-lpu](https://github.com/damruyadav2022-lpu))
-- **Email**: `damruyadav2022@gmail.com`
-- **Institution**: Lovely Professional University (LPU)
-- **Repository**: [https://github.com/damruyadav2022-lpu/IBM-Internship-Project](https://github.com/damruyadav2022-lpu/IBM-Internship-Project)
+**Q: Why not use standard ChatGPT directly?**  
+*A*: Standard LLMs hallucinate chemical dosages, lack real-time APMC mandi prices, cannot access live Open-Meteo satellite feeds, and have no knowledge of regional soil calibration (such as **PAU Ludhiana's Package of Practices**). KrishiRakshak uses the LLM strictly as a natural-language synthesis layer grounded in verified domain microservices and RAG documents.
+
+**Q: How does the system achieve sub-second response times?**  
+*A*: Intent detection and entity extraction run through a lightweight heuristic router in $< 5\text{ ms}$, invoking local microservices directly. The Groq LLaMA 3.3 70B engine synthesizes the verified observation in $< 400\text{ ms}$, keeping the total pipeline execution well under $1\text{ second}$.
+
+**Q: How does the Soil Health feature save farmers money?**  
+*A*: Many farmers apply NPK fertilizers blindly. KrishiRakshak's PAU Ludhiana engine checks baseline soil potassium; if native potassium is high ($>280\text{ kg/ha}$), it completely omits MOP fertilizer, saving the farmer approximately ₹1,200 to ₹1,500 per acre in unnecessary input costs.
 
 ---
 
-## 📜 License
-
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+## 👤 Author
+* **Developer**: Deepak Kumar Yadav
+* **Email**: damruyadav2022@gmail.com
+* **Repository**: [IBM-Internship-Project](https://github.com/damruyadav2022-lpu/IBM-Internship-Project.git)

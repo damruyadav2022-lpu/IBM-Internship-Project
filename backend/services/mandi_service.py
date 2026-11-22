@@ -347,35 +347,49 @@ class MandiService:
 
         # Case A: Specific Commodity Found
         if target_commodity:
+            # Prioritize farmer's local / selected market, then at most 1 secondary reference market
+            candidate_markets = []
+            if target_market_key in markets:
+                candidate_markets.append(target_market_key)
+            for m in markets.keys():
+                if m not in candidate_markets:
+                    candidate_markets.append(m)
+                if len(candidate_markets) >= 2:
+                    break
+
             lines = [
-                f"📊 Real-Time Mandi Prices for **{target_commodity}** ({today_date}):",
-                "🟢 Source: Official Government of India Agmarknet / APMC Live",
+                f"📊 **{target_commodity} — आज का लाइव मंडी भाव ({today_date})**",
+                "🟢 *स्रोत: भारत सरकार ई-राष्ट्रीय कृषि बाजार (e-NAM) / Agmarknet Live*",
                 "",
             ]
             found = False
-            for m_name, m_info in markets.items():
+            for m_name in candidate_markets:
+                m_info = markets.get(m_name, {})
                 comms = m_info.get("commodities", {})
                 for c_name, p in comms.items():
                     if target_commodity.lower() in c_name.lower():
                         found = True
-                        trend_sym = "📈 Rising" if p["trend"] == "rising" else ("📉 Falling" if p["trend"] == "falling" else "➡️ Stable")
+                        trend_sym = "📈 मजबूत मांग (Rising)" if p["trend"] == "rising" else ("📉 नरमी (Falling)" if p["trend"] == "falling" else "➡️ स्थिर (Stable)")
+                        modal_kg = p['modal'] / 100.0
                         lines.append(
-                            f"• **{m_name}** ({m_info.get('state','')}):\n"
-                            f"  - Modal Price: **₹{p['modal']:,}/quintal** (₹{p['modal']/100:.1f}/kg)\n"
-                            f"  - Price Range: ₹{p['min']:,} – ₹{p['max']:,}/quintal\n"
-                            f"  - Trend: {trend_sym}\n"
-                            f"  - Market Arrival: {p.get('remarks', 'Active trading')}"
+                            f"• 🏪 **{m_name}** ({m_info.get('state','')}):\n"
+                            f"  - **मॉडल भाव**: **₹{p['modal']:,} प्रति क्विंटल** (₹{modal_kg:.1f} प्रति किलो)\n"
+                            f"  - **भाव दायरा**: ₹{p['min']:,} – ₹{p['max']:,} प्रति क्विंटल\n"
+                            f"  - **बाजार स्थिति**: {trend_sym} | {p.get('remarks', 'सक्रिय आवक')}"
                         )
+                        break
+
             if not found:
-                lines.append(f"Price records for '{target_commodity}' currently updating in nearby APMCs.")
+                lines.append(f"• **{target_market_key}**: {target_commodity} की आवक एवं मूल्य अद्यतन प्रगति पर है।")
 
             # Append MSP if applicable
             for msp_crop, msp_info in MSP_2024_25.items():
                 if target_commodity.lower() in msp_crop.lower():
-                    lines.append(f"\n🏛️ **Government MSP 2024-25:** ₹{msp_info['msp']:,}/quintal ({msp_info.get('remarks')})")
+                    msp_rate = msp_info['msp']
+                    lines.append(f"\n🏛️ **न्यूनतम समर्थन मूल्य (MSP 2024-25):** **₹{msp_rate:,} प्रति क्विंटल**")
                     break
 
-            lines.append("\n💡 *Farming Tip: Verify grade and moisture percentage before unloading at the mandi auction yard.*")
+            lines.append("\n💡 **व्यावहारिक किसान सलाह**: मंडी ले जाने से पहले दाने में नमी 12% से कम रखें और छनाई करके ले जाएं ताकि सर्वोत्तम भाव मिल सके।")
             return "\n".join(lines)
 
         # Case B: Market Summary for the Selected City

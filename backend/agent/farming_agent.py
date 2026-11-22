@@ -1,13 +1,15 @@
 """
 KrishiRakshak Farming Agent.
-High-performance agricultural advice agent with multi-language support (English and Hindi).
-Uses direct domain-tool routing + RAG retrieval + Groq LLM for sub-second responses.
+High-performance agricultural advice agent with multi-language support (11 Indian languages).
+Uses direct domain-tool routing + RAG retrieval + Groq LLM for sub-second, structured responses.
+Guarantees clean, neat, and clutter-free advice without confusing data dumps.
 """
 import logging
 import os
+import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
 # Ensure backend directory is in sys.path for robust standalone/Streamlit execution
 _BACKEND_DIR = str(Path(__file__).parent.parent.resolve())
@@ -33,53 +35,71 @@ logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPTS = {
     "English": (
-        "You are KrishiRakshak, an expert AI farming assistant for Indian farmers. "
-        "You provide practical, accurate, and actionable agricultural advice. "
-        "Respond in clear, simple English. Always mention the data sources you used."
+        "You are KrishiRakshak AI, an expert agricultural advisor for Indian farmers. "
+        "Provide direct, concise, and beautifully structured advice.\n"
+        "STRICT FORMATTING RULES:\n"
+        "1. Answer ONLY what the farmer specifically asked. Never dump unrelated crops, weather, or market rates.\n"
+        "2. Structure your response into 3 clean, distinct sections:\n"
+        "   🎯 **Direct Answer**: 1-2 clear, simple sentences directly answering the question.\n"
+        "   📌 **Key Action Points**: Maximum 3 to 4 concise bullet points with practical steps, exact dosages, or dates.\n"
+        "   💡 **Farmer Tip**: 1 practical field tip for best results.\n"
+        "3. Use simple, conversational language without scientific jargon. Keep total response under 150 words."
     ),
     "Hindi": (
-        "आप कृषि रक्षक हैं, भारतीय किसानों के लिए एक विशेषज्ञ AI सहायक। "
-        "आप व्यावहारिक, सटीक और कार्रवाई योग्य कृषि सलाह देते हैं। "
-        "हमेशा सरल ग्रामीण हिंदी भाषा में जवाब दें जो किसान समझ सकें। "
-        "जब पर्याप्त जानकारी मिल जाए, तो व्यापक और उपयोगी उत्तर दें।"
+        "आप कृषि रक्षक (KrishiRakshak AI) हैं, भारतीय किसानों के लिए एक विशेषज्ञ कृषि सलाहकार। "
+        "हमेशा सीधा, स्पष्ट, स्वच्छ और सुंदर संरचित उत्तर दें।\n"
+        "सख्त नियम:\n"
+        "1. केवल वही जानकारी दें जो किसान ने पूछी है। अनावश्यक अन्य फसलों, मौसम या मंडी का डेटा कभी न डालें।\n"
+        "2. उत्तर को 3 स्पष्ट भागों में प्रस्तुत करें:\n"
+        "   🎯 **मुख्य उत्तर**: 1-2 सरल पंक्तियों में सीधा उत्तर।\n"
+        "   📌 **कार्य योजना / महत्वपूर्ण बिंदु**: केवल 3-4 संक्षिप्त बुलेट पॉइंट्स (सटीक मात्रा, दवा, किस्म या तारीख)।\n"
+        "   💡 **किसान सलाह**: 1 व्यावहारिक खेत सुझाव।\n"
+        "3. भाषा एकदम सरल, ग्रामीण और आदरणीय हिंदी रखें। 120-150 शब्दों में संपूर्ण बात स्पष्ट करें।"
     ),
     "Punjabi": (
-        "ਤੁਸੀਂ ਕ੍ਰਿਸ਼ੀ ਰੱਖਿਅਕ (KrishiRakshak) ਹੋ, ਭਾਰਤੀ ਕਿਸਾਨਾਂ ਲਈ ਇੱਕ ਮਾਹਰ AI ਖੇਤੀਬਾੜੀ ਸਹਾਇਕ। "
-        "ਤੁਸੀਂ ਵਿਹਾਰਕ, ਸਟੀਕ ਅਤੇ ਲਾਭਦਾਇਕ ਖੇਤੀ ਸਲਾਹ ਦਿੰਦੇ ਹੋ। "
-        "ਹਮੇਸ਼ਾ ਸਰਲ, ਸਪੱਸ਼ਟ ਪੰਜਾਬੀ ਬੋਲੀ (ਗੁਰਮੁਖੀ ਲਿਪੀ) ਵਿੱਚ ਜਵਾਬ ਦਿਓ ਤਾਂ ਜੋ ਕਿਸਾਨ ਆਸਾਨੀ ਨਾਲ ਸਮਝ ਸਕਣ। "
-        "ਜਦੋਂ ਬਿਮਾਰੀ ਜਾਂ ਕੀੜੇ ਬਾਰੇ ਪੁੱਛਿਆ ਜਾਵੇ, ਤਾਂ ਲੱਛਣ, ਕਾਰਨ, ਦੇਸੀ/ਜੈਵਿਕ ਇਲਾਜ ਅਤੇ ਰਸਾਇਣਕ ਰੋਕਥਾਮ ਸਪੱਸ਼ਟ ਦੱਸੋ।"
+        "ਤੁਸੀਂ ਕ੍ਰਿਸ਼ੀ ਰੱਖਿਅਕ (KrishiRakshak AI) ਹੋ, ਭਾਰਤੀ ਕਿਸਾਨਾਂ ਲਈ ਮਾਹਰ ਖੇਤੀਬਾੜੀ ਸਲਾਹਕਾਰ। "
+        "ਹਮੇਸ਼ਾ ਸਿੱਧਾ, ਸਪੱਸ਼ਟ ਅਤੇ ਸਾਫ਼-ਸੁਥਰਾ ਜਵਾਬ ਦਿਓ।\n"
+        "ਸਖ਼ਤ ਨਿਯਮ:\n"
+        "1. ਸਿਰਫ਼ ਉਹੀ ਜਾਣਕਾਰੀ ਦਿਓ ਜੋ ਕਿਸਾਨ ਨੇ ਪੁੱਛੀ ਹੈ। ਬੇਲੋੜਾ ਡੇਟਾ ਨਾ ਦਿਓ।\n"
+        "2. ਜਵਾਬ ਨੂੰ 3 ਭਾਗਾਂ ਵਿੱਚ ਵੰਡੋ:\n"
+        "   🎯 **ਸਿੱਧਾ ਜਵਾਬ**: 1-2 ਲਾਈਨਾਂ ਵਿੱਚ ਮੁੱਖ ਗੱਲ।\n"
+        "   📌 **ਮੁੱਖ ਨੁਕਤੇ**: 3-4 ਸੰਖੇਪ ਬੁਲੇਟ ਪੁਆਇੰਟ (ਸਹੀ ਮਾਤਰਾ, ਦਵਾਈ ਜਾਂ ਕਿਸਮ)।\n"
+        "   💡 **ਕਿਸਾਨ ਸਲਾਹ**: 1 ਵਿਹਾਰਕ ਖੇਤ ਸੁਝਾਅ।\n"
+        "3. ਸਰਲ ਅਤੇ ਸਪੱਸ਼ਟ ਪੰਜਾਬੀ ਬੋਲੀ (ਗੁਰਮੁਖੀ) ਵਰਤੋ।"
     ),
     "Bengali": (
-        "আপনি কৃষিরক্ষক (KrishiRakshak), ভারতীয় কৃষকদের জন্য একজন বিশেষজ্ঞ এআই কৃষি সহকারী। "
-        "সর্বদা স্পষ্ট, সহজ বাংলা ভাষায় কৃষকদের বোঝার উপযোগী পরামর্শ দিন। সার, কীটনাশক ও সেচ বিষয়ে সঠিক নির্দেশনা প্রদান করুন।"
+        "আপনি কৃষিরক্ষক (KrishiRakshak AI), ভারতীয় কৃষকদের জন্য একজন বিশেষজ্ঞ কৃষি সহকারী। "
+        "সর্বদা স্পষ্ট, সংক্ষিপ্ত এবং পরিচ্ছন্নভাবে কাঠামোগত উত্তর দিন।\n"
+        "নিয়ম:\n"
+        "1. শুধুমাত্র জিজ্ঞাসিত প্রশ্নের সুনির্দিষ্ট উত্তর দিন।\n"
+        "2. উত্তরটি ৩টি স্পষ্ট বিভাগে সাজান: 🎯 **সরাসরি উত্তর**, 📌 **মূল পদক্ষেপ** (সর্বোচ্চ ৩-৪টি বুলেট), 💡 **কৃষকের পরামর্শ**।\n"
+        "3. সহজ বাংলা ভাষায় ১২০-১৫০ শব্দের মধ্যে উত্তর রাখুন।"
     ),
     "Telugu": (
-        "మీరు కృషిరక్షక్ (KrishiRakshak), భారతీయ రైతుల కోసం నిపుణులైన AI వ్యవసాయ సహాయకుడు. "
-        "ఎల్లప్పుడూ స్పష్టమైన, సరళమైన తెలుగు భాషలో రైతులకు ఉపయోగకరమైన సలహాలు ఇవ్వండి. ఎరువులు, తెగుళ్ల నివారణ గురించి పూర్తి వివరాలు అందించండి."
+        "మీరు కృషిరక్షక్ (KrishiRakshak AI), భారతీయ రైతుల కోసం నిపుణులైన వ్యవసాయ సహాయకుడు. "
+        "స్పష్టమైన, సరళమైన మరియు చక్కగా నిర్మాణాత్మకమైన సమాధానం ఇవ్వండి.\n"
+        "నియమాలు: 1. అడిగిన ప్రశ్నకు మాత్రమే సమాధానం ఇవ్వండి. 2. మూడు భాగాలుగా చెప్పండి: 🎯 ప్రత్యక్ష సమాధానం, 📌 ముఖ్యమైన అంశాలు, 💡 రైతు చిట్కా. 3. సరళమైన తెలుగు ఉపయోగించండి."
     ),
     "Marathi": (
-        "तुम्ही कृषिरक्षक (KrishiRakshak) आहात, भारतीय शेतकऱ्यांसाठी एक तज्ज्ञ AI कृषी सल्लागार. "
-        "शेतकऱ्यांना समजेल अशा सोप्या मराठी भाषेत अचूक आणि व्यावहारिक शेतीविषयक मार्गदर्शन करा."
+        "तुम्ही कृषिरक्षक (KrishiRakshak AI) आहात, भारतीय शेतकऱ्यांसाठी एक तज्ज्ञ कृषी सल्लागार. "
+        "नेहमी सोप्या, अचूक आणि मुद्देसूद भाषेत मार्गदर्शन करा.\n"
+        "नियम: 1. विचारलेल्या प्रश्नाचेच थेट उत्तर द्या. 2. ३ भागांत विभागणी करा: 🎯 मुख्य उत्तर, 📌 कृती योजना (३-४ मुद्दे), 💡 शेतकरी सल्ला."
     ),
     "Tamil": (
-        "நீங்கள் கிருஷிரக்ஷக் (KrishiRakshak), இந்திய விவசாயிகளுக்கான ஒரு சிறந்த AI வேளாண்மை உதவியாளர். "
-        "விவசாயிகளுக்கு எளிய, தெளிவான தமிழ் மொழியில் பயிர் பாதுகாப்பு, உரம் மற்றும் பாசன ஆலோசனைகளை வழங்குங்கள்."
+        "நீங்கள் கிருஷிரக்ஷக் (KrishiRakshak AI), விவசாயிகளுக்கான சிறந்த வேளாண்மை ஆலோசகர். "
+        "எளிய, தெளிவான மற்றும் துல்லியமான பதிலை 3 பிரிவுகளில் வழங்கவும்: 🎯 நேரடி பதில், 📌 முக்கிய குறிப்புகள், 💡 விவசாயி ஆலோசனை."
     ),
     "Gujarati": (
-        "તમે કૃષિરક્ષક (KrishiRakshak) છો, ભારતીય ખેડૂતો માટે એક નિષ્ણાત AI ખેતી સહાયક. "
-        "હંમેશા સરળ ગુજરાતી ભાષામાં ખેડૂતો માટે વ્યવહારુ અને સચોટ કૃષિ સલાહ આપો."
+        "તમે કૃષિરક્ષક (KrishiRakshak AI) છો. હંમેશા સરળ, સ્પષ્ટ અને મુદ્દાસર માર્ગદર્શન આપો: 🎯 સીધો જવાબ, 📌 મુખ્ય મુદ્દાઓ, 💡 ખેડૂત સલાહ."
     ),
     "Kannada": (
-        "ನೀವು ಕೃಷಿರಕ್ಷಕ್ (KrishiRakshak), ಭಾರತೀಯ ರೈತರಿಗಾಗಿ ಪರಿಣಿತ AI ಕೃಷಿ ಸಹಾಯಕ. "
-        "ರೈತರಿಗೆ ಸುಲಭವಾಗಿ ಅರ್ಥವಾಗುವ ಸರಳ ಕನ್ನಡ ಭಾಷೆಯಲ್ಲಿ ನಿಖರವಾದ ಕೃಷಿ ಸಲಹೆಗಳನ್ನು ನೀಡಿ."
+        "ನೀವು ಕೃಷಿರಕ್ಷಕ್ (KrishiRakshak AI). ಸರಳ ಕನ್ನಡದಲ್ಲಿ ನೇರ ಮತ್ತು ರಚನಾತ್ಮಕ ಸಲಹೆ ನೀಡಿ: 🎯 ನೇರ ಉತ್ತರ, 📌 ಪ್ರಮುಖ ಅಂಶಗಳು, 💡 ರೈತ ಸಲಹೆ."
     ),
     "Malayalam": (
-        "നിങ്ങൾ കൃഷിരക്ഷക് (KrishiRakshak) ആണ്, ഇന്ത്യൻ കർഷകർക്കായുള്ള വിദഗ്ദ്ധ AI കാർഷിക സഹായി. "
-        "ലളിതമായ മലയാളത്തിൽ കർഷകർക്ക് പ്രയോജനപ്പെടുന്ന കൃഷി ഉപദേശങ്ങളും കീടനിയന്ത്രണ മാർഗ്ഗങ്ങളും നൽകുക."
+        "നിങ്ങൾ കൃഷിരക്ഷക് (KrishiRakshak AI) ആണ്. ലളിതമായ മലയാളത്തിൽ വ്യക്തമായ നിർദ്ദേശങ്ങൾ നൽകുക: 🎯 നേരിട്ടുള്ള മറുപടി, 📌 പ്രധാന കാര്യങ്ങൾ, 💡 കർഷക ഉപദേശം."
     ),
     "Urdu": (
-        "آپ کرشی رکشاک (KrishiRakshak) ہیں، ہندوستانی کسانوں کے لیے ماہر AI زرعی معاون۔ "
-        "ہمیشہ صاف، آسان اردو زبان میں فصلوں، کھاد اور کیڑوں کے تدارک کے بارے میں مفید رہنمائی فراہم کریں۔"
+        "آپ کرشی رکشاک (KrishiRakshak AI) ہیں۔ کسانوں کے لیے صاف، آسان اور باقاعدہ رہنمائی فراہم کریں: 🎯 سیدھا جواب، 📌 اہم نکات، 💡 کسان مشورہ۔"
     ),
 }
 
@@ -88,23 +108,90 @@ def _make_rag_tool() -> Tool:
     """Create a RAG knowledge base search tool."""
     def rag_search(query: str) -> str:
         try:
-            docs = similarity_search(query, k=3)
+            docs = similarity_search(query, k=2)
             if not docs:
-                return "No relevant information found in the knowledge base."
+                return "No specific documentation found for this query in the regional manual."
             results = []
             for i, doc in enumerate(docs, 1):
-                source = doc.metadata.get("source", "Agricultural Knowledge Base")
-                results.append(f"[Source {i}: {source}]\n{doc.page_content}")
-            return "\n\n".join(results)
+                content = doc.page_content.strip()
+                if len(content) > 300:
+                    content = content[:300] + "..."
+                results.append(f"• {content}")
+            return "\n".join(results)
         except Exception as e:
             logger.error(f"RAG search error: {e}")
             return f"Knowledge base search failed: {str(e)}"
 
     return Tool(
         name="agricultural_knowledge_base",
-        description="Search the agricultural knowledge base for general farming information and expert advice.",
+        description="Search agronomic guidelines and university research manuals.",
         func=rag_search,
     )
+
+
+def _classify_primary_intent(query: str) -> str:
+    """
+    Intelligently determine the farmer's primary intent to prevent runaway
+    multi-tool collisions (e.g. asking for wheat mandi price should NOT trigger weather or potato data).
+    """
+    q = query.lower()
+
+    # 1. Mandi / Price Intent (High Priority)
+    mandi_keywords = [
+        "price", "rate", "bhav", "mandi", "daam", "cost", "sell", "msp", "quintal", "rupee", "bazar", "market",
+        "भाव", "दाम", "रेट", "मंडी", "मूल्य", "बाजार", "क्विंटल", "खरीद", "बेचने", "दर", "बाजारभाव",
+        "ਭਾਅ", "ਰੇਟ", "ਕੀਮਤ", "ਮੰਡੀ", "কিমਤ", "দর", "দাম", "বাজার", "ధర", "రేటు", "మండి", "விலை", "சந்தை",
+        "ભાવ", "કિંમત", "ಬೆಲೆ", "ದರ", "വില", "قیمت", "ریٹ", "منڈی"
+    ]
+    if any(k in q for k in mandi_keywords):
+        return "mandi"
+
+    # 2. Weather & Irrigation Window Intent
+    weather_keywords = [
+        "weather", "rain", "temperature", "forecast", "mausam", "barish", "humidity", "wind", "storm",
+        "मौसम", "बारिश", "बरसात", "तापमान", "हवा", "हवामान", "पाऊस", "गारपीट", "ਮੀਂਹ", "ਤਾਪਮਾਨ", "ਬਰਸਾਤ",
+        "আবহাওয়া", "বৃষ্টি", "వాతావరణం", "వర్షం", "வானிலை", "மழை", "હવામાન", "વરસાદ", "ಹವಾಮಾನ", "മഴ", "بارش"
+    ]
+    if any(k in q for k in weather_keywords):
+        return "weather"
+
+    # 3. Pest / Disease / Spray Intent
+    pest_keywords = [
+        "pest", "insect", "disease", "spray", "pesticide", "fungus", "blight", "rust", "keet", "keda", "bimari", "rog",
+        "कीट", "कीड़ा", "रोग", "बीमारी", "झुलसा", "जंग", "धब्बा", "दवा", "कीटनाशक", "स्प्रे", "फफूंद", "कीड", "अळी",
+        "ਕੀੜੇ", "ਬਿਮਾਰੀ", "ਸਪਰੇਅ", "ਕੀਟਨਾਸ਼ਕ", "ਕੁੰਗੀ", "ਤੇਲਾ", "ਝੁਲਸਾ", "পোকা", "রোগ", "কীটনাশক", "తెగులు", "పురుగు",
+        "பூச்சி", "நோய்", "જીવાત", "ઇયળ", "ರೋಗ", "ಹುಳು", "കീടങ്ങൾ", "کیڑے", "سپرے"
+    ]
+    if any(k in q for k in pest_keywords):
+        return "pest_disease"
+
+    # 4. Soil / Fertilizer / Nutrient Intent
+    soil_keywords = [
+        "soil", "fertilizer", "urea", "dap", "mop", "npk", "khad", "zinc", "potash", "nitrogen", "soil health", "soil test",
+        "खाद", "उर्वरक", "यूरिया", "मिट्टी", "डीएपी", "पोटाश", "जिंक", "खत", "माती", "ਖਾਦ", "ਯੂਰੀਆ", "ਮਿੱਟੀ", "ਡੀਏਪੀ",
+        "সার", "ইউরিয়া", "মাটি", "ఎరువు", "యూరియా", "మట్టి", "உரம்", "ખાતર", "ಗೊಬ್ಬರ", "വളം", "کھاد"
+    ]
+    if any(k in q for k in soil_keywords):
+        return "soil"
+
+    # 5. Climate Risk / Disaster Alert Intent
+    risk_keywords = [
+        "risk", "alert", "warning", "drought", "flood", "heat stress", "frost", "cold wave", "waterlogging",
+        "जोखिम", "चेतावनी", "अलर्ट", "सूखा", "बाढ़", "पाला", "तुषार", "लू", "अतिवृष्टि", "ਧੋਕਾ", "ਖ਼ਤਰਾ", "ਚੇਤਾਵਨੀ", "ਸੋਕਾ"
+    ]
+    if any(k in q for k in risk_keywords):
+        return "climate_risk"
+
+    # 6. Crop Sowing / Variety / Cultivation Guide Intent
+    crop_keywords = [
+        "variety", "sowing", "seed", "crop", "beej", "plant", "yield", "season", "kharif", "rabi", "zaid",
+        "किस्म", "बोने", "बीज", "पैदावार", "फसल", "रबी", "खरीफ", "ਕਿਸਮ", "ਬੀਜ", "ਫਸਲ", "রবী", "খরিফ",
+        "విత్తనాలు", "పంట", "விதை", "பயிர்", "બિયારણ", "પાક", "ಬೆಳೆ", "വിള", "فصل"
+    ]
+    if any(k in q for k in crop_keywords):
+        return "crop"
+
+    return "general"
 
 
 def run_agent(
@@ -113,8 +200,8 @@ def run_agent(
     location: str = "Delhi",
 ) -> Dict[str, Any]:
     """
-    Run the KrishiRakshak agent and return a structured response.
-    Routes queries to domain tools with sub-second synthesis.
+    Run the KrishiRakshak agent and return a neat, well-structured response.
+    Routes queries to targeted domain tools without cluttered data dumps.
     """
     llm = None
     try:
@@ -140,248 +227,115 @@ def run_agent(
 
     system_prompt = SYSTEM_PROMPTS.get(effective_language, SYSTEM_PROMPTS["English"])
 
-    msg_lower = message.lower()
-
-    # Domain tools
-    tool_instances = {
-        "weather_forecast": get_weather_tool(location),
-        "crop_recommendation": get_crop_tool(),
-        "pest_disease_control": get_pest_tool(),
-        "disease_info": create_disease_tool(),
-        "mandi_price_checker": get_market_tool(),
-        "climate_risk_early_warning": get_climate_risk_tool(location),
-        "soil_health_card_fertilizer": get_soil_tool(location),
-    }
-
-    keyword_map = {
-        "soil_health_card_fertilizer": [
-            "soil", "fertilizer", "urea", "dap", "mop", "npk", "soil health", "soil test",
-            "khad", "urvarak", "zinc", "potash", "phosphorus", "nitrogen", "pau", "ludhiana",
-            # Hindi / Marathi
-            "खाद", "उर्वरक", "यूरिया", "मिट्टी", "सॉइल हेल्थ", "डीएपी", "पोटाश", "जिंक", "खत", "माती", "जमीन",
-            # Punjabi
-            "ਖਾਦ", "ਯੂਰੀਆ", "ਮਿੱਟੀ", "ਸੋਇਲ ਹੈਲਥ", "ਡੀਏਪੀ", "ਪੋਟਾਸ਼", "ਜ਼ਿੰਕ",
-            # Bengali
-            "সার", "ইউরিয়া", "মাটি", "ডিএপি", "পটাশ",
-            # Telugu
-            "ఎరువు", "యూరియా", "మట్టి", "పొటాష్",
-            # Tamil
-            "உரம்", "யூரியா", "மண்",
-            # Gujarati
-            "ખાતર", "જમીન", "માટી", "યુરિયા",
-            # Kannada
-            "ಗೊಬ್ಬರ", "ಯೂರಿಯಾ", "ಮಣ್ಣು",
-            # Malayalam
-            "വളം", "യൂറിയ", "മണ്ണ്",
-            # Urdu
-            "کھاد", "مٹی", "یوریا"
-        ],
-        "climate_risk_early_warning": [
-            "risk", "alert", "warning", "drought", "flood", "heat stress", "frost", "cold wave",
-            "heavy rain", "waterlogging", "soil moisture", "lodging", "climate risk", "early warning",
-            "sukha", "badh", "pala", "chilling",
-            # Hindi / Marathi
-            "जोखिम", "चेतावनी", "अलर्ट", "सूखा", "बाढ़", "पाला", "तुषार", "लू", "अतिवृष्टि", "ओलावृष्टि", "नमी", "धोका", "दुष्काळ",
-            # Punjabi
-            "ਖ਼ਤਰਾ", "ਚੇਤਾਵਨੀ", "ਸੋਕਾ", "ਹੜ੍ਹ", "ਪਾਲਾ", "ਤਪਸ਼", "ਲੂ", "ਸਿੱਲ੍ਹ",
-            # Bengali
-            "ঝুঁকি", "সতর্কতা", "খরা", "বন্যা", "অতিবৃষ্টি",
-            # Telugu
-            "ప్రమాదం", "హెచ్చరిక", "కరువు", "వరదలు",
-            # Tamil
-            "எச்சரிக்கை", "வறட்சி", "வெள்ளம்",
-            # Gujarati
-            "ચેતવણી", "જોખમ", "દુષ્કાળ", "પૂર",
-            # Kannada
-            "ಎಚ್ಚರಿಕೆ", "ಬರಗಾಲ", "ಪ್ರವಾಹ",
-            # Malayalam
-            "മുന്നറിയിപ്പ്", "വരൾച്ച", "വെള്ളപ്പൊക്കം",
-            # Urdu
-            "انتباہ", "خطرہ", "خشک سالی", "سیलाब"
-        ],
-        "weather_forecast": [
-            "weather", "rain", "temperature", "forecast", "mausam", "barish",
-            "humidity", "wind", "storm", "climate", "hawa", "thand", "garmi", "advisory",
-            # Hindi / Marathi
-            "मौसम", "बारिश", "बरसात", "तापमान", "हवा", "ठंड", "गर्मी", "सलाह", "हवामान", "पाऊस", "गारपीट",
-            # Punjabi
-            "ਮੌਸਮ", "ਮੀਂਹ", "ਤਾਪਮਾਨ", "ਹਵਾ", "ਬਾਰਿਸ਼", "ਸਲਾਹ",
-            # Bengali
-            "আবহাওয়া", "বৃষ্টি", "তাপমাত্রা", "ঝড়",
-            # Telugu
-            "వాతావరణం", "వర్షం", "ఉష్ణోగ్రత",
-            # Tamil
-            "வானிலை", "மழை", "வெப்பநிலை",
-            # Gujarati
-            "હવામાન", "વરસાદ", "તાપમાન",
-            # Kannada
-            "ಹವಾಮಾನ", "ಮಳೆ", "ತಾಪಮಾನ",
-            # Malayalam
-            "കാലാവസ്ഥ", "മഴ", "താപനില",
-            # Urdu
-            "موسم", "بارش", "درجہ حرارت"
-        ],
-        "crop_recommendation": [
-            "crop", "season", "kharif", "rabi", "zaid", "sow", "plant", "fasal",
-            "beej", "variety", "yield", "gehun", "wheat", "rice", "chawal", "dhan",
-            "makka", "corn", "cotton", "kapas", "mustard", "sarson", "potato", "aloo",
-            "sowing", "harvest",
-            # Hindi / Marathi
-            "फसल", "खरीफ", "रबी", "जायद", "बोने", "बीज", "पैदावार", "किस्म", "गेहूं",
-            "धान", "चावल", "मक्का", "कपास", "सरसों", "आलू", "पीक", "बियाणे", "उत्पादन",
-            # Punjabi
-            "ਫਸਲ", "ਕਣਕ", "ਝੋਨਾ", "ਬੀਜ", "ਖਰੀਫ", "ਰਬੀ", "ਮੱਕੀ", "ਕਪਾਹ", "ਆਲੂ",
-            # Bengali
-            "ফসল", "ধান", "গম", "বীজ", "রবি", "খরিফ",
-            # Telugu
-            "పంట", "వరి", "గోధుమ", "విత్తనాలు",
-            # Tamil
-            "பயிர்", "நெல்", "கோதுமை", "விதை",
-            # Gujarati
-            "પાક", "ઘઉં", "ડાંગર", "બિયારણ",
-            # Kannada
-            "ಬೆಳೆ", "ಭತ್ತ", "ಗೋಧಿ", "ಬೀಜ",
-            # Malayalam
-            "വിള", "നെല്ല്", "ഗോതമ്പ്", "വിത്ത്",
-            # Urdu
-            "فصل", "گندم", "چاول", "بیج"
-        ],
-        "pest_disease_control": [
-            "pest", "insect", "keet", "keda", "illia", "sundhi", "spray",
-            "pesticide", "neem", "caterpillar", "aphid", "borer",
-            # Hindi / Marathi
-            "कीट", "कीड़ा", "रोकथाम", "दवा", "कीटनाशक", "नीम", "स्प्रे", "कीड", "अळी", "फवारणी",
-            # Punjabi
-            "ਕੀੜੇ", "ਸੁੰਡੀ", "ਸਪਰੇਅ", "ਕੀਟਨਾਸ਼ਕ", "ਰੋਕਥਾਮ", "ਤੇਲਾ",
-            # Bengali
-            "কীটপতঙ্গ", "পোকা", "কীটনাশক", "স্প্রে",
-            # Telugu
-            "కీటకాలు", "పురుగు", "పురుగుమందు", "స్ప్రే",
-            # Tamil
-            "பூச்சி", "பூச்சிக்கொல்லி", "தெளிப்பு",
-            # Gujarati
-            "જીવાત", "ઇયળ", "જંતુનાશક", "છંટકાવ",
-            # Kannada
-            "ಕೀಟ", "ಹುಳು", "ಕೀಟನಾಶಕ",
-            # Malayalam
-            "കീടങ്ങൾ", "കീടനാശിനി", "സ്പ്രേ",
-            # Urdu
-            "کیڑے", "کیڑے مار دوا", "سپرے"
-        ],
-        "disease_info": [
-            "disease", "leaf", "symptom", "treatment", "bimari", "rog", "blight",
-            "rust", "spot", "yellow", "curl", "fungus", "wilt", "rot",
-            # Hindi / Marathi
-            "रोग", "बीमारी", "झुलसा", "जंग", "धब्बा", "पत्ती", "फफूंद", "बुरशी", "रोगराई",
-            # Punjabi
-            "ਬਿਮਾਰੀ", "ਪੱਤੇ", "ਪੱਤਿਆਂ", "ਪੀਲੇ", "ਧੱਬੇ", "ਕੁੰਗੀ", "ਝੁਲਸਾ", "ਫੰਗਸ", "ਰੋਗ", "ਟਮਾਟਰ",
-            # Bengali
-            "রোগ", "পাতা", "দাগ", "হলুদ", "ছত্রাক",
-            # Telugu
-            "తెగులు", "వ్యాధి", "ఆకులు", "మచ్చలు", "శిలీంధ్రం",
-            # Tamil
-            "நோய்", "இலை", "புள்ளி", "பூஞ்சை",
-            # Gujarati
-            "રોગ", "પાંદડા", "ડાઘ", "ફૂગ",
-            # Kannada
-            "ರೋಗ", "ಎಲೆ", "ಮಚ್ಚೆ", "ಶಿಲೀಂಧ್ರ",
-            # Malayalam
-            "രോഗം", "ഇല", "പുള്ളി", "ഫംഗസ്",
-            # Urdu
-            "بیماری", "پتے", "دھبے", "پھپھوندی"
-        ],
-        "mandi_price_checker": [
-            "price", "mandi", "rate", "bhav", "daam", "market", "sell", "cost",
-            "msp", "quintal", "rupee", "rs", "bazar", "kharid",
-            # Hindi / Marathi
-            "मंडी", "भाव", "दाम", "रेट", "मूल्य", "बाजार", "टमाटर", "क्विंटल", "खरीद", "बेचने", "दर", "बाजारभाव",
-            # Punjabi
-            "ਮੰਡੀ", "ਭਾਅ", "ਰੇਟ", "ਕੀਮਤ", "ਕੁਇੰਟਲ",
-            # Bengali
-            "মন্ডি", "দাম", "দর", "বাজার", "মূল্য", "টমেটো",
-            # Telugu
-            "ధర", "మార్కెట్", "రేటు", "మండి", "టమాటా",
-            # Tamil
-            "விலை", "சந்தை", "மண்டி", "தக்காளி",
-            # Gujarati
-            "ભાવ", "બજાર", "મંડી", "કિંમત", "ટમેટા",
-            # Kannada
-            "ಬೆಲೆ", "ಮಾರುಕಟ್ಟೆ", "ದರ", "ಟೊಮೆಟೊ",
-            # Malayalam
-            "വില", "വിപണി", "മാർക്കറ്റ്", "തക്കാളി",
-            # Urdu
-            "بھاؤ", "منڈی", "قیمت", "ریٹ", "بازار"
-        ],
-    }
-
+    # 1. Identify primary intent
+    intent = _classify_primary_intent(message)
     tool_outputs = []
     sources = []
     agent_steps = []
 
-    # Check matching domain tools
-    for tool_name, keywords in keyword_map.items():
-        if any(kw in msg_lower for kw in keywords):
-            tool = tool_instances.get(tool_name)
-            if tool:
-                try:
-                    output = tool.func(message)
-                    tool_outputs.append(f"[{tool_name}]\n{output}")
-                    sources.append(tool_name)
-                    agent_steps.append({
-                        "tool": tool_name,
-                        "input": message,
-                        "output": str(output)[:300],
-                    })
-                except Exception as e:
-                    logger.warning(f"Tool {tool_name} error: {e}")
+    # 2. Execute ONLY the single targeted domain tool based on primary intent
+    if intent == "mandi":
+        mandi_tool = get_market_tool()
+        try:
+            mandi_output = mandi_tool.func(f"{message} (Location: {location})")
+            tool_outputs.append(mandi_output)
+            sources.append("mandi_price_checker")
+            agent_steps.append({"tool": "mandi_price_checker", "input": message, "output": mandi_output[:250]})
+        except Exception as e:
+            logger.warning(f"Mandi tool error: {e}")
 
-    # If no specific domain tool matched, or query is broad, supplement with RAG
-    if not tool_outputs or any(kw in msg_lower for kw in ["soil", "fertilizer", "khad", "organic", "water", "irrigation"]):
+    elif intent == "weather":
+        wx_tool = get_weather_tool(location)
+        try:
+            wx_output = wx_tool.func(message)
+            tool_outputs.append(wx_output)
+            sources.append("weather_forecast")
+            agent_steps.append({"tool": "weather_forecast", "input": message, "output": wx_output[:250]})
+        except Exception as e:
+            logger.warning(f"Weather tool error: {e}")
+
+    elif intent == "pest_disease":
+        pest_tool = get_pest_tool()
+        try:
+            p_output = pest_tool.func(message)
+            tool_outputs.append(p_output)
+            sources.append("pest_disease_control")
+            agent_steps.append({"tool": "pest_disease_control", "input": message, "output": p_output[:250]})
+        except Exception as e:
+            logger.warning(f"Pest tool error: {e}")
+
+    elif intent == "soil":
+        soil_tool = get_soil_tool(location)
+        try:
+            s_output = soil_tool.func(message)
+            tool_outputs.append(s_output)
+            sources.append("soil_health_card_fertilizer")
+            agent_steps.append({"tool": "soil_health_card_fertilizer", "input": message, "output": s_output[:250]})
+        except Exception as e:
+            logger.warning(f"Soil tool error: {e}")
+
+    elif intent == "climate_risk":
+        risk_tool = get_climate_risk_tool(location)
+        try:
+            r_output = risk_tool.func(message)
+            tool_outputs.append(r_output)
+            sources.append("climate_risk_early_warning")
+            agent_steps.append({"tool": "climate_risk_early_warning", "input": message, "output": r_output[:250]})
+        except Exception as e:
+            logger.warning(f"Climate risk tool error: {e}")
+
+    elif intent == "crop":
+        crop_tool = get_crop_tool()
+        try:
+            c_output = crop_tool.func(message)
+            tool_outputs.append(c_output)
+            sources.append("crop_recommendation")
+            agent_steps.append({"tool": "crop_recommendation", "input": message, "output": c_output[:250]})
+        except Exception as e:
+            logger.warning(f"Crop tool error: {e}")
+
+    # If general or tool produced nothing, query RAG
+    if not tool_outputs:
         try:
             rag_tool = _make_rag_tool()
             rag_output = rag_tool.func(message)
-            if "No relevant information found" not in rag_output and "failed" not in rag_output:
-                tool_outputs.append(f"[agricultural_knowledge_base]\n{rag_output}")
+            if "No specific documentation found" not in rag_output and "failed" not in rag_output:
+                tool_outputs.append(rag_output)
                 sources.append("agricultural_knowledge_base")
-                agent_steps.append({
-                    "tool": "agricultural_knowledge_base",
-                    "input": message,
-                    "output": str(rag_output)[:300],
-                })
+                agent_steps.append({"tool": "agricultural_knowledge_base", "input": message, "output": rag_output[:250]})
         except Exception as e:
-            logger.warning(f"RAG search warning: {e}")
+            logger.warning(f"RAG search error: {e}")
 
     # Build prompt for LLM synthesis
-    context = "\n\n".join(tool_outputs) if tool_outputs else "No specific tool data found for this question."
+    context = "\n\n".join(tool_outputs) if tool_outputs else "No specific tool telemetry needed for this general query."
     augmented_message = f"{message} (Farmer's Location: {location})"
 
     lang_instructions = {
-        "English": "Answer in clear, polite, structured English with practical recommendations and an action checklist.",
-        "Hindi": "कृपया उत्तर पूरी तरह से शुद्ध, सरल और आदरणीय हिंदी (Devanagari script) में दें। व्यावहारिक सुझाव, रोकथाम के उपाय और स्पष्ट बुलेट पॉइंट्स या तालिका का उपयोग करें।",
-        "Punjabi": "ਕਿਰਪਾ ਕਰਕੇ ਪੂਰਾ ਜਵਾਬ ਸਰਲ ਅਤੇ ਸਪੱਸ਼ਟ ਪੰਜਾਬੀ (Gurmukhi script) ਵਿੱਚ ਦਿਓ। ਕਿਸਾਨ ਵੀਰਾਂ ਲਈ ਵਿਹਾਰਕ ਸਲਾਹ ਅਤੇ ਬੁਲੇਟ ਪੁਆਇੰਟਾਂ ਦੀ ਵਰਤੋਂ ਕਰੋ।",
-        "Bengali": "দয়া করে সহজ, স্পষ্ট ও ব্যবহারিক বাংলা ভাষায় উত্তর দিন। বুলেট পয়েন্ট ও সারসংক্ষেপের মাধ্যমে কৃষকের বোধগম্য নির্দেশিকা দিন।",
-        "Telugu": "దయచేసి స్పష్టమైన, సరళమైన తెలుగు భాషలో సమాధానం ఇవ్వండి. రైతులకు ఉపయోగపడే కార్యాచరణ అంశాలు మరియు బుల్లెట్ పాయింట్లను ఉపయోగించండి.",
-        "Marathi": "कृपया सोप्या, अचूक आणि व्यावहारिक मराठी भाषेत उत्तर द्या. शेतकऱ्यांसाठी आवश्यक सूचना व मुद्द्यांचा समावेश करा.",
-        "Tamil": "தயவுசெய்து எளிய, தெளிவான தமிழ் மொழியில் பதிலளிக்கவும். விவசாயிகளுக்கான நடைமுறை ஆலோசனைகளை புல்லட் புள்ளிகளில் வழங்கவும்.",
-        "Gujarati": "કૃપા કરીને સરળ, સ્પષ્ટ ગુજરાતી ભાષામાં જવાબ આપો. ખેડૂતો માટે વ્યવહારુ સલાહ અને મુદ્દાઓ જણાવો.",
-        "Kannada": "ದಯವಿಟ್ಟು ಸರಳ, ಸ್ಪಷ್ಟ ಕನ್ನಡ ಭಾಷೆಯಲ್ಲಿ ಉತ್ತರಿಸಿ. ರೈತರಿಗೆ ಅನುಕೂಲವಾಗುವ ಪ್ರಾಯೋಗಿಕ ಸಲಹೆಗಳನ್ನು ಬುಲೆಟ್ ಪಾಯಿಂಟ್‌ಗಳಲ್ಲಿ ನೀಡಿ.",
-        "Malayalam": "ദയവായി ലളിതമായ മലയാളത്തിൽ കർഷകർക്ക് പ്രയോജനപ്പെടുന്ന പ്രായോഗിക നിർദ്ദേശങ്ങൾ നൽകുക.",
-        "Urdu": "براہ کرم آسان، واضح اردو زبان میں جواب دیں۔ کسانوں کے لیے عملی تجاویز اور اقدامات بلٹ پوائنٹس میں پیش کریں۔",
+        "English": "Answer in clean, polite, structured English. Use 3 sections: 🎯 Direct Answer, 📌 Key Points (max 3 bullets), 💡 Farmer Tip. Do NOT dump unrelated crops, weather, or mandi prices.",
+        "Hindi": "उत्तर पूरी तरह से सरल, शुद्ध और आदरणीय हिंदी में दें। ३ स्पष्ट भाग रखें: 🎯 मुख्य उत्तर, 📌 महत्वपूर्ण बिंदु (अधिकतम ३ बुलेट्स), 💡 किसान सलाह। अनावश्यक फसल या मौसम का डेटा बिल्कुल न दें।",
+        "Punjabi": "ਸਰਲ ਅਤੇ ਸਪੱਸ਼ਟ ਪੰਜਾਬੀ (ਗੁਰਮੁਖੀ) ਵਿੱਚ ਜਵਾਬ ਦਿਓ। ੩ ਭਾਗ ਵਰਤੋ: 🎯 ਸਿੱਧਾ ਜਵਾਬ, 📌 ਮੁੱਖ ਨੁਕਤੇ, 💡 ਕਿਸਾਨ ਸਲਾਹ। ਕੋਈ ਵਾਧੂ ਜਾਣਕਾਰੀ ਨਾ ਦਿਓ।",
+        "Bengali": "সহজ ও স্পষ্ট বাংলা ভাষায় উত্তর দিন। ৩টি অংশ রাখুন: 🎯 সরাসরি উত্তর, 📌 মূল পয়েন্ট, 💡 কৃষকের পরামর্শ।",
+        "Telugu": "సరళమైన తెలుగులో సమాధానం ఇవ్వండి: 🎯 ప్రత్యక్ష సమాధానం, 📌 ముఖ్య విషయాలు, 💡 రైతు చిట్కా.",
+        "Marathi": "सोप्या मराठीत उत्तर द्या: 🎯 मुख्य उत्तर, 📌 कृती मुद्दे, 💡 शेतकरी सल्ला.",
+        "Tamil": "எளிய தமிழில் பதிலளிக்கவும்: 🎯 நேரடி பதில், 📌 முக்கிய புள்ளிகள், 💡 விவசாயி குறிப்பு.",
+        "Gujarati": "સરળ ગુજરાતીમાં જવાબ આપો: 🎯 સીધો જવાબ, 📌 મુખ્ય મુદ્દાઓ, 💡 ખેડૂત સલાહ.",
+        "Kannada": "ಸರಳ ಕನ್ನಡದಲ್ಲಿ ಉತ್ತರಿಸಿ: 🎯 ನೇರ ಉತ್ತರ, 📌 ಪ್ರಮುಖ ಅಂಶಗಳು, 💡 ರೈತ ಸಲಹೆ.",
+        "Malayalam": "ലളിതമായ മലയാളത്തിൽ മറുപടി നൽകുക: 🎯 നേരിട്ടുള്ള മറുപടി, 📌 പ്രധാന കാര്യങ്ങൾ, 💡 കർഷക നിർദ്ദേശം.",
+        "Urdu": "آسان اردو میں جواب دیں: 🎯 سیدھا جواب، 📌 اہم نکات، 💡 کسان مشورہ۔",
     }
     lang_instruction = lang_instructions.get(effective_language, lang_instructions["English"])
 
     full_prompt = (
         f"{system_prompt}\n\n"
-        f"--- REAL-TIME AGRICULTURAL DATA ---\n"
+        f"--- TARGETED FIELD DATA ---\n"
         f"{context}\n\n"
-        f"--- FARMER QUESTION ---\n"
+        f"--- FARMER QUERY ---\n"
         f"{augmented_message}\n\n"
-        f"Instructions:\n"
-        f"1. {lang_instruction}\n"
-        f"2. Use the provided real-time agricultural data accurately.\n"
-        f"3. Always mention the data source (e.g., Open-Meteo, Agmarknet) and keep the advice actionable for farmers."
+        f"STRICT INSTRUCTION: {lang_instruction}\n"
+        f"Keep the answer concise, neat, well-structured, and directly relevant to the farmer's question."
     )
 
+    # 3. If LLM is available, synthesize the clean answer
     if llm is not None:
         try:
             response = llm.invoke([
@@ -389,7 +343,7 @@ def run_agent(
                 HumanMessage(content=full_prompt),
             ])
             return {
-                "response": response.content,
+                "response": response.content.strip(),
                 "sources": sources,
                 "agent_steps": agent_steps,
                 "language": effective_language,
@@ -398,62 +352,66 @@ def run_agent(
         except Exception as e:
             logger.error(f"LLM synthesis error: {e}")
 
-    # Polished Fallback: return verified domain tool telemetry in a clear, formatted presentation
+    # 4. Smart Clean Fallback (when no LLM key is configured)
+    # Never dump raw telemetry; deliver structured, clean advice
     if tool_outputs:
-        import re
-        cleaned_outputs = []
-        for out in tool_outputs:
-            clean_str = re.sub(r"^\[[a-zA-Z0-9_]+\]\s*", "", out.strip())
-            if clean_str:
-                cleaned_outputs.append(clean_str)
-
-        retrieved_data = "\n\n---\n\n".join(cleaned_outputs)
+        clean_data = tool_outputs[0].strip()
 
         fallback_headers = {
-            "English": "🌾 **Verified Agricultural Advisory & Real-Time Intelligence:**",
-            "Hindi": "🌾 **सत्यापित कृषि परामर्श एवं मौसम बुलेटिन (रियल-टाइम डेटा):**",
-            "Punjabi": "🌾 **ਪ੍ਰਮਾਣਿਤ ਖੇਤੀਬਾੜੀ ਸਲਾਹ ਅਤੇ ਮੌਸਮ ਜਾਣਕਾਰੀ (ਰੀਅਲ-ਟਾਈਮ ਡੇਟਾ):**",
-            "Bengali": "🌾 **যাচাইকৃত কৃষি পরামর্শ ও আবহাওয়া বুলেটিন (রিয়েল-টাইম তথ্য):**",
-            "Telugu": "🌾 **ధృవీకరించబడిన వ్యవసాయ సలహాలు మరియు వాతావరణ బులెటిన్ (రియల్-టైమ్ డేటా):**",
-            "Marathi": "🌾 **सत्यापित कृषी सल्ला आणि हवामान अंदाज (रिअल-टाइम डेटा):**",
-            "Tamil": "🌾 **சரிபார்க்கப்பட்ட வேளாண்மை ஆலோசனை மற்றும் வானிலை அறிக்கை (நேரலை தரவு):**",
-            "Gujarati": "🌾 **ચકાસાયેલ કૃષિ સલાહ અને હવામાન બુલેટિન (રીઅલ-ટાઇમ ડેટા):**",
-            "Kannada": "🌾 **ಪರಿಶೀಲಿಸಿದ ಕೃಷಿ ಸಲಹೆ ಮತ್ತು ಹವಾಮಾನ ಮಾಹಿತಿ (ನೈಜ-ಸಮಯದ ಡೇಟಾ):**",
-            "Malayalam": "🌾 **സ്ഥിരീകരിച്ച കാർഷിക നിർദ്ദേശങ്ങളും കാലാവസ്ഥാ ബുള്ളറ്റിനും:**",
-            "Urdu": "🌾 **تصدیق شدہ زرعی ایڈوائزری اور موسم کا بلیٹن (ریئل ٹائم ڈیٹا):**",
+            "English": "🌾 **KrishiRakshak Agricultural Intelligence:**",
+            "Hindi": "🌾 **कृषिरक्षक प्रामाणिक कृषि परामर्श:**",
+            "Punjabi": "🌾 **ਕ੍ਰਿਸ਼ੀ ਰੱਖਿਅਕ ਪ੍ਰਮਾਣਿਤ ਖੇਤੀਬਾੜੀ ਸਲਾਹ:**",
+            "Bengali": "🌾 **কৃষিরক্ষক প্রমাণিত কৃষি পরামর্শ:**",
+            "Telugu": "🌾 **కృషిరక్షక్ ధృవీకరించిన వ్యవసాయ సలహా:**",
+            "Marathi": "🌾 **कृषिरक्षक प्रमाणित शेती सल्ला:**",
+            "Tamil": "🌾 **கிருஷிரக்ஷக் சரிபார்க்கப்பட்ட வேளாண்மை ஆலோசனை:**",
+            "Gujarati": "🌾 **કૃષિરક્ષક પ્રમાણિત કૃષિ માર્ગદર્શન:**",
+            "Kannada": "🌾 **ಕೃಷಿರಕ್ಷಕ್ ಪರಿಶೀಲಿಸಿದ ಕೃಷಿ ಸಲಹೆ:**",
+            "Malayalam": "🌾 **കൃഷിരക്ഷക് കാർഷിക നിർദ്ദേശം:**",
+            "Urdu": "🌾 **کرشی رکشاک مصدقہ زرعی ایڈوائزری:**",
         }
-        fallback_footers = {
-            "English": "💡 *Tip: For interactive conversational answers and custom follow-ups, activate your Groq API key in the left sidebar or in Streamlit Cloud Secrets.*",
-            "Hindi": "💡 *सुझाव: अधिक विस्तृत AI बातचीत और व्यक्तिगत सवालों के लिए बायीं ओर साइडबार में अपनी Groq API Key दर्ज करें।*",
-            "Punjabi": "💡 *ਸੁਝਾਅ: ਵਿਸਤ੍ਰਿਤ AI ਜਵਾਬਾਂ ਲਈ ਖੱਬੇ ਪਾਸੇ ਸਾਈਡਬਾਰ ਵਿੱਚ ਆਪਣੀ Groq API Key ਦਰਜ ਕਰੋ।*",
-            "Bengali": "💡 *পরামর্শ: বিস্তারিত AI কথোপকথনের জন্য বাম সাইডবারে আপনার Groq API Key দিন।*",
-            "Telugu": "💡 *సూచన: పూర్తి AI సలహాల కోసం ఎడమ సైడ్‌బార్‌లో మీ Groq API Key నమోదు చేయండి.*",
-            "Marathi": "💡 *टीप: अधिक तपशीलवार AI उत्तरांसाठी डाव्या साइडबारमध्ये तुमची Groq API Key प्रविष्ट करा.*",
-            "Tamil": "💡 *குறிப்பு: விரிவான AI பதில்களுக்கு இடது பக்கப்பட்டியில் உங்கள் Groq API Key உள்ளிடவும்.*",
-            "Gujarati": "💡 *સલાહ: વિગતવાર AI વાતચીત માટે ડાબી સાઇડબારમાં તમારી Groq API Key દાખલ કરો.*",
-            "Kannada": "💡 *ಸಲಹೆ: ವಿವರವಾದ AI ಉತ್ತರಗಳಿಗಾಗಿ ಎಡ ಸೈಡ್‌ಬಾರ್‌ನಲ್ಲಿ ನಿಮ್ಮ Groq API Key ನಮೂದಿಸಿ.*",
-            "Malayalam": "💡 *നിർദ്ദേശം: കൂടുതൽ AI മറുപടികൾക്കായി ഇടതു സൈഡ്ബാറിൽ Groq API Key ചേർക്കുക.*",
-            "Urdu": "💡 *مشورہ: تفصیلی AI گفتگو کے لیے بائیں سائڈبار میں اپنی Groq API Key درج کریں۔*",
-        }
-
         header = fallback_headers.get(effective_language, fallback_headers["English"])
-        footer_tip = fallback_footers.get(effective_language, fallback_footers["English"])
 
         return {
-            "response": f"{header}\n\n{retrieved_data}\n\n---\n{footer_tip}",
+            "response": f"{header}\n\n{clean_data}",
             "sources": sources,
             "agent_steps": agent_steps,
             "language": effective_language,
             "language_code": effective_code,
         }
 
-    return {
-        "response": (
-            "⚠️ **Groq API Key Required for AI Synthesis**\n\n"
-            "To ask custom free-form questions, please enter your free Groq API key in the left sidebar.\n\n"
-            "👉 [Get a free Groq API Key at console.groq.com/keys](https://console.groq.com/keys)\n\n"
-            "*If running on Streamlit Cloud, add `LLM_API_KEY = \"gsk_...\"` in App Settings → Secrets.*"
+    # 5. Default guided response
+    default_msg = {
+        "English": (
+            "🌾 **KrishiRakshak Advisory Assistant**\n\n"
+            "Please ask a specific question such as:\n"
+            "• *\"What is today's wheat mandi price in Delhi?\"*\n"
+            "• *\"How to control Yellow Rust in wheat?\"*\n"
+            "• *\"When should I apply the first urea split?\"*\n"
+            "• *\"Will it rain in my region this week?\"*\n\n"
+            "💡 *Tip: Enter your free Groq API key in the left sidebar for interactive conversational AI answers.*"
         ),
+        "Hindi": (
+            "🌾 **कृषिरक्षक कृषि परामर्श सहायक**\n\n"
+            "कृपया अपना विशिष्ट सवाल पूछें, जैसे:\n"
+            "• *\"दिल्ली मंडी में आज गेहूं का भाव क्या है?\"*\n"
+            "• *\"गेहूं में पीली कुंगी (रस्ट) की रोकथाम कैसे करें?\"*\n"
+            "• *\"गेहूं में यूरिया की पहली खुराक कब दें?\"*\n"
+            "• *\"क्या इस हफ्ते मेरे क्षेत्र में बारिश होगी?\"*\n\n"
+            "💡 *सुझाव: अधिक व्यक्तिगत और विस्तृत बातचीत के लिए बायीं ओर साइडबार में अपनी Groq API Key दर्ज करें।*"
+        ),
+        "Punjabi": (
+            "🌾 **ਕ੍ਰਿਸ਼ੀ ਰੱਖਿਅਕ ਖੇਤੀਬਾੜੀ ਸਹਾਇਕ**\n\n"
+            "ਕਿਰਪਾ ਕਰਕੇ ਆਪਣਾ ਖਾਸ ਸਵਾਲ ਪੁੱਛੋ, ਜਿਵੇਂ:\n"
+            "• *\"ਲੁਧਿਆਣਾ ਮੰਡੀ ਵਿੱਚ ਅੱਜ ਕਣਕ ਦਾ ਕੀ ਭਾਅ ਹੈ?\"*\n"
+            "• *\"ਕਣਕ ਵਿੱਚ ਪੀਲੀ ਕੁੰਗੀ ਦਾ ਕੀ ਇਲਾਜ ਹੈ?\"*\n"
+            "• *\"ਪਹਿਲੇ ਪਾਣੀ ਤੇ ਯੂਰੀਆ ਕਦੋਂ ਪਾਈਏ?\"*\n\n"
+            "💡 *ਸੁਝਾਅ: ਵਿਸਤ੍ਰਿਤ AI ਗੱਲਬਾਤ ਲਈ ਖੱਬੇ ਪਾਸੇ ਸਾਈਡਬਾਰ ਵਿੱਚ ਆਪਣੀ Groq API Key ਦਰਜ ਕਰੋ।*"
+        ),
+    }
+
+    return {
+        "response": default_msg.get(effective_language, default_msg["English"]),
         "sources": sources,
         "agent_steps": agent_steps,
         "language": effective_language,
