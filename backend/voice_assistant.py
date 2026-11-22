@@ -18,6 +18,87 @@ logger = logging.getLogger(__name__)
 # Ensure env variables are loaded
 load_dotenv()
 
+SUPPORTED_LANGUAGES = {
+    "English": "en",
+    "Hindi": "hi",
+    "Punjabi": "pa",
+    "Bengali": "bn",
+    "Telugu": "te",
+    "Marathi": "mr",
+    "Tamil": "ta",
+    "Gujarati": "gu",
+    "Kannada": "kn",
+    "Malayalam": "ml",
+    "Urdu": "ur",
+}
+
+LANGUAGE_CODE_MAP = {
+    "en": "English",
+    "hi": "Hindi",
+    "pa": "Punjabi",
+    "bn": "Bengali",
+    "te": "Telugu",
+    "mr": "Marathi",
+    "ta": "Tamil",
+    "gu": "Gujarati",
+    "kn": "Kannada",
+    "ml": "Malayalam",
+    "ur": "Urdu",
+}
+
+
+def detect_language(text: str) -> Tuple[str, str]:
+    """
+    Auto-detect input language using Unicode script ranges and agricultural keywords.
+    Returns (Language_Name, ISO_639_1_Code), e.g. ('Punjabi', 'pa'), ('Telugu', 'te').
+    """
+    if not text or not text.strip():
+        return "English", "en"
+
+    # 1. Unicode Script Checks (100% precision for native Indian scripts)
+    if re.search(r'[\u0A00-\u0A7F]', text):  # Gurmukhi
+        return "Punjabi", "pa"
+    if re.search(r'[\u0980-\u09FF]', text):  # Bengali / Assamese
+        return "Bengali", "bn"
+    if re.search(r'[\u0C00-\u0C7F]', text):  # Telugu
+        return "Telugu", "te"
+    if re.search(r'[\u0B80-\u0BFF]', text):  # Tamil
+        return "Tamil", "ta"
+    if re.search(r'[\u0A80-\u0AFF]', text):  # Gujarati
+        return "Gujarati", "gu"
+    if re.search(r'[\u0C80-\u0CFF]', text):  # Kannada
+        return "Kannada", "kn"
+    if re.search(r'[\u0D00-\u0D7F]', text):  # Malayalam
+        return "Malayalam", "ml"
+    if re.search(r'[\u0600-\u06FF]', text):  # Perso-Arabic / Urdu
+        return "Urdu", "ur"
+
+    # Devanagari Script (Hindi vs Marathi distinction)
+    if re.search(r'[\u0900-\u097F]', text):
+        marathi_distinctive = ["आहे", "नाही", "पिक", "शेतकरी", "कसे", "करावे", "खत", "माहितੀ", "करा"]
+        if any(w in text for w in marathi_distinctive):
+            return "Marathi", "mr"
+        return "Hindi", "hi"
+
+    # 2. Transliterated Romanized Input (Hinglish / Punglish / Tanglish)
+    t_lower = text.lower()
+    hinglish_kw = [
+        "kisan", "fasal", "khad", "tamatar", "gehu", "gehun", "kheti", "mandi",
+        "bhav", "kaise", "batao", "dhan", "chawal", "rog", "bimari", "keet",
+        "paani", "kitna", "kab", "kare", "karna", "upchar", "dawakhana"
+    ]
+    if any(re.search(r'\b' + re.escape(w) + r'\b', t_lower) for w in hinglish_kw):
+        return "Hindi", "hi"
+
+    punglish_kw = [
+        "kanak", "jhone", "j 레이", "khet", "kisaan", "pind", "pani", "kadon",
+        "kivein", "spray", "khungi", "keede", "sundi"
+    ]
+    if any(re.search(r'\b' + re.escape(w) + r'\b', t_lower) for w in punglish_kw):
+        return "Punjabi", "pa"
+
+    return "English", "en"
+
 
 def _get_whisper_client() -> OpenAI:
     """Return OpenAI client configured for Groq Whisper."""
@@ -47,8 +128,8 @@ def transcribe_audio(
     language: Optional[str] = None,
 ) -> str:
     """
-    Transcribe audio bytes using Groq's whisper-large-v3.
-    Supports Hindi ('hi'), Punjabi ('pa'), English ('en'), or auto-detection.
+    Transcribe audio bytes using Groq Whisper-large-v3.
+    Supports all major Indian and international languages or auto-detection.
     """
     try:
         api_key = os.getenv("LLM_API_KEY", "")
@@ -61,14 +142,12 @@ def transcribe_audio(
 
         # Map language string to ISO-639-1 code
         lang_code = None
-        if language:
+        if language and language.lower() not in ("auto", "auto-detect", "none"):
             l_lower = language.lower()
-            if "hindi" in l_lower or l_lower == "hi":
-                lang_code = "hi"
-            elif "punjabi" in l_lower or l_lower == "pa":
-                lang_code = "pa"
-            elif "english" in l_lower or l_lower == "en":
-                lang_code = "en"
+            for name, code in SUPPORTED_LANGUAGES.items():
+                if name.lower() in l_lower or code == l_lower:
+                    lang_code = code
+                    break
 
         kwargs = {
             "model": "whisper-large-v3",
@@ -77,7 +156,7 @@ def transcribe_audio(
         if lang_code:
             kwargs["language"] = lang_code
 
-        logger.info(f"Transcribing audio with Whisper (language={lang_code})...")
+        logger.info(f"Transcribing audio with Whisper (language={lang_code or 'auto-detect'})...")
         transcription = client.audio.transcriptions.create(**kwargs)
         return transcription.text.strip()
     except Exception as e:
@@ -105,8 +184,7 @@ def clean_text_for_speech(text: str) -> str:
     cleaned = re.sub(r'\|[^\n]+\|', '', cleaned)
     cleaned = re.sub(r'[-:]{3,}', '', cleaned)
     # Remove emojis that might be pronounced awkwardly
-    # Keep punctuation and alphanumeric characters
-    cleaned = re.sub(r'[`~>•📌🌾🔬🌤️💰🚨📞🌱🐛]', '', cleaned)
+    cleaned = re.sub(r'[`~>•📌🌾🔬🌤️💰🚨📞🌱🐛🧪💸✨🗣️🔊]', '', cleaned)
     # Remove multiple spaces/newlines
     cleaned = re.sub(r'\n{2,}', '. ', cleaned)
     cleaned = re.sub(r'\s+', ' ', cleaned).strip()
@@ -115,12 +193,12 @@ def clean_text_for_speech(text: str) -> str:
 
 def generate_speech(
     text: str,
-    language: str = "English",
+    language: str = "auto",
     max_chars: int = 1200,
 ) -> bytes:
     """
-    Generate spoken MP3 audio from text using gTTS.
-    Supports Hindi ('hi'), Punjabi ('pa'), and English ('en').
+    Generate spoken MP3 audio from text using gTTS across all Indian languages.
+    Auto-detects language if set to 'auto'.
     """
     clean_text = clean_text_for_speech(text)
     if not clean_text:
@@ -130,14 +208,18 @@ def generate_speech(
     if len(clean_text) > max_chars:
         clean_text = clean_text[:max_chars].rsplit('.', 1)[0] + '.'
 
-    # Language mapping
-    l_lower = language.lower()
-    if "hindi" in l_lower or l_lower == "hi":
-        lang_code = "hi"
-    elif "punjabi" in l_lower or l_lower == "pa":
-        lang_code = "pa"
+    # Language resolution
+    lang_code = "en"
+    if language and language.lower() not in ("auto", "auto-detect", "none"):
+        l_lower = language.lower()
+        for name, code in SUPPORTED_LANGUAGES.items():
+            if name.lower() in l_lower or code == l_lower:
+                lang_code = code
+                break
     else:
-        lang_code = "en"
+        # Auto-detect language from text
+        _, detected_code = detect_language(clean_text)
+        lang_code = detected_code
 
     try:
         logger.info(f"Generating TTS audio (lang={lang_code}, length={len(clean_text)} chars)...")
@@ -147,16 +229,16 @@ def generate_speech(
         out_buf.seek(0)
         return out_buf.getvalue()
     except Exception as e:
-        logger.error(f"TTS generation error: {e}")
-        # Fallback to English if regional language failed
-        if lang_code != "en":
-            try:
-                tts = gTTS(text=clean_text, lang="en", slow=False)
-                out_buf = io.BytesIO()
-                tts.write_to_fp(out_buf)
-                out_buf.seek(0)
-                return out_buf.getvalue()
-            except Exception:
-                pass
-        raise RuntimeError(f"Text-to-speech generation failed: {str(e)}")
+        logger.error(f"TTS generation error for {lang_code}: {e}")
+        # Fallback to English or Hindi
+        fallback_code = "hi" if lang_code in ("pa", "mr", "gu") else "en"
+        try:
+            tts = gTTS(text=clean_text, lang=fallback_code, slow=False)
+            out_buf = io.BytesIO()
+            tts.write_to_fp(out_buf)
+            out_buf.seek(0)
+            return out_buf.getvalue()
+        except Exception:
+            return b""
+
 

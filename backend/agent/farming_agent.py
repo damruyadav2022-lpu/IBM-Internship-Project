@@ -26,27 +26,62 @@ from agent.tools.market_tool import get_market_tool
 from agent.tools.disease_detection_tool import create_disease_tool
 from agent.tools.climate_risk_tool import get_climate_risk_tool
 from agent.tools.soil_tool import get_soil_tool
+from voice_assistant import detect_language, SUPPORTED_LANGUAGES
 
 logger = logging.getLogger(__name__)
 
 
-SYSTEM_PROMPT_EN = """You are KrishiRakshak, an expert AI farming assistant for Indian farmers.
-You provide practical, accurate, and actionable agricultural advice.
-Always be empathetic and use simple language that farmers can understand.
-Respond in clear, simple English.
-When you have enough information, give a comprehensive helpful answer with practical recommendations.
-Always mention the data sources you used."""
-
-SYSTEM_PROMPT_HI = """आप कृषि रक्षक हैं, भारतीय किसानों के लिए एक विशेषज्ञ AI सहायक।
-आप व्यावहारिक, सटीक और कार्रवाई योग्य कृषि सलाह देते हैं।
-हमेशा सरल ग्रामीण हिंदी भाषा में जवाब दें जो किसान समझ सकें।
-जब पर्याप्त जानकारी मिल जाए, तो व्यापक और उपयोगी उत्तर दें।"""
-
-SYSTEM_PROMPT_PA = """ਤੁਸੀਂ ਕ੍ਰਿਸ਼ੀ ਰੱਖਿਅਕ (KrishiRakshak) ਹੋ, ਭਾਰਤੀ ਕਿਸਾਨਾਂ ਲਈ ਇੱਕ ਮਾਹਰ AI ਖੇਤੀਬਾੜੀ ਸਹਾਇਕ।
-ਤੁਸੀਂ ਵਿਹਾਰਕ, ਸਟੀਕ ਅਤੇ ਲਾਭਦਾਇਕ ਖੇਤੀ ਸਲਾਹ ਦਿੰਦੇ ਹੋ।
-ਹਮੇਸ਼ਾ ਸਰਲ, ਸਪੱਸ਼ਟ ਪੰਜਾਬੀ ਬੋਲੀ (ਗੁਰਮੁਖੀ ਲਿਪੀ) ਵਿੱਚ ਜਵਾਬ ਦਿਓ ਤਾਂ ਜੋ ਕਿਸਾਨ ਆਸਾਨੀ ਨਾਲ ਸਮਝ ਸਕਣ।
-ਜਦੋਂ ਬਿਮਾਰੀ ਜਾਂ ਕੀੜੇ ਬਾਰੇ ਪੁੱਛਿਆ ਜਾਵੇ, ਤਾਂ ਲੱਛਣ, ਕਾਰਨ, ਦੇਸੀ/ਜੈਵਿਕ ਇਲਾਜ ਅਤੇ ਰਸਾਇਣਕ ਰੋਕਥਾਮ ਸਪੱਸ਼ਟ ਦੱਸੋ।
-ਹਮੇਸ਼ਾ ਭਰੋਸੇਯੋਗ ਖੇਤੀਬਾੜੀ ਜਾਣਕਾਰੀ ਅਤੇ ਡੇਟਾ ਸਰੋਤਾਂ ਦਾ ਹਵਾਲਾ ਦਿਓ।"""
+SYSTEM_PROMPTS = {
+    "English": (
+        "You are KrishiRakshak, an expert AI farming assistant for Indian farmers. "
+        "You provide practical, accurate, and actionable agricultural advice. "
+        "Respond in clear, simple English. Always mention the data sources you used."
+    ),
+    "Hindi": (
+        "आप कृषि रक्षक हैं, भारतीय किसानों के लिए एक विशेषज्ञ AI सहायक। "
+        "आप व्यावहारिक, सटीक और कार्रवाई योग्य कृषि सलाह देते हैं। "
+        "हमेशा सरल ग्रामीण हिंदी भाषा में जवाब दें जो किसान समझ सकें। "
+        "जब पर्याप्त जानकारी मिल जाए, तो व्यापक और उपयोगी उत्तर दें।"
+    ),
+    "Punjabi": (
+        "ਤੁਸੀਂ ਕ੍ਰਿਸ਼ੀ ਰੱਖਿਅਕ (KrishiRakshak) ਹੋ, ਭਾਰਤੀ ਕਿਸਾਨਾਂ ਲਈ ਇੱਕ ਮਾਹਰ AI ਖੇਤੀਬਾੜੀ ਸਹਾਇਕ। "
+        "ਤੁਸੀਂ ਵਿਹਾਰਕ, ਸਟੀਕ ਅਤੇ ਲਾਭਦਾਇਕ ਖੇਤੀ ਸਲਾਹ ਦਿੰਦੇ ਹੋ। "
+        "ਹਮੇਸ਼ਾ ਸਰਲ, ਸਪੱਸ਼ਟ ਪੰਜਾਬੀ ਬੋਲੀ (ਗੁਰਮੁਖੀ ਲਿਪੀ) ਵਿੱਚ ਜਵਾਬ ਦਿਓ ਤਾਂ ਜੋ ਕਿਸਾਨ ਆਸਾਨੀ ਨਾਲ ਸਮਝ ਸਕਣ। "
+        "ਜਦੋਂ ਬਿਮਾਰੀ ਜਾਂ ਕੀੜੇ ਬਾਰੇ ਪੁੱਛਿਆ ਜਾਵੇ, ਤਾਂ ਲੱਛਣ, ਕਾਰਨ, ਦੇਸੀ/ਜੈਵਿਕ ਇਲਾਜ ਅਤੇ ਰਸਾਇਣਕ ਰੋਕਥਾਮ ਸਪੱਸ਼ਟ ਦੱਸੋ।"
+    ),
+    "Bengali": (
+        "আপনি কৃষিরক্ষক (KrishiRakshak), ভারতীয় কৃষকদের জন্য একজন বিশেষজ্ঞ এআই কৃষি সহকারী। "
+        "সর্বদা স্পষ্ট, সহজ বাংলা ভাষায় কৃষকদের বোঝার উপযোগী পরামর্শ দিন। সার, কীটনাশক ও সেচ বিষয়ে সঠিক নির্দেশনা প্রদান করুন।"
+    ),
+    "Telugu": (
+        "మీరు కృషిరక్షక్ (KrishiRakshak), భారతీయ రైతుల కోసం నిపుణులైన AI వ్యవసాయ సహాయకుడు. "
+        "ఎల్లప్పుడూ స్పష్టమైన, సరళమైన తెలుగు భాషలో రైతులకు ఉపయోగకరమైన సలహాలు ఇవ్వండి. ఎరువులు, తెగుళ్ల నివారణ గురించి పూర్తి వివరాలు అందించండి."
+    ),
+    "Marathi": (
+        "तुम्ही कृषिरक्षक (KrishiRakshak) आहात, भारतीय शेतकऱ्यांसाठी एक तज्ज्ञ AI कृषी सल्लागार. "
+        "शेतकऱ्यांना समजेल अशा सोप्या मराठी भाषेत अचूक आणि व्यावहारिक शेतीविषयक मार्गदर्शन करा."
+    ),
+    "Tamil": (
+        "நீங்கள் கிருஷிரக்ஷக் (KrishiRakshak), இந்திய விவசாயிகளுக்கான ஒரு சிறந்த AI வேளாண்மை உதவியாளர். "
+        "விவசாயிகளுக்கு எளிய, தெளிவான தமிழ் மொழியில் பயிர் பாதுகாப்பு, உரம் மற்றும் பாசன ஆலோசனைகளை வழங்குங்கள்."
+    ),
+    "Gujarati": (
+        "તમે કૃષિરક્ષક (KrishiRakshak) છો, ભારતીય ખેડૂતો માટે એક નિષ્ણાત AI ખેતી સહાયક. "
+        "હંમેશા સરળ ગુજરાતી ભાષામાં ખેડૂતો માટે વ્યવહારુ અને સચોટ કૃષિ સલાહ આપો."
+    ),
+    "Kannada": (
+        "ನೀವು ಕೃಷಿರಕ್ಷಕ್ (KrishiRakshak), ಭಾರತೀಯ ರೈತರಿಗಾಗಿ ಪರಿಣಿತ AI ಕೃಷಿ ಸಹಾಯಕ. "
+        "ರೈತರಿಗೆ ಸುಲಭವಾಗಿ ಅರ್ಥವಾಗುವ ಸರಳ ಕನ್ನಡ ಭಾಷೆಯಲ್ಲಿ ನಿಖರವಾದ ಕೃಷಿ ಸಲಹೆಗಳನ್ನು ನೀಡಿ."
+    ),
+    "Malayalam": (
+        "നിങ്ങൾ കൃഷിരക്ഷക് (KrishiRakshak) ആണ്, ഇന്ത്യൻ കർഷകർക്കായുള്ള വിദഗ്ദ്ധ AI കാർഷിക സഹായി. "
+        "ലളിതമായ മലയാളത്തിൽ കർഷകർക്ക് പ്രയോജനപ്പെടുന്ന കൃഷി ഉപദേശങ്ങളും കീടനിയന്ത്രണ മാർഗ്ഗങ്ങളും നൽകുക."
+    ),
+    "Urdu": (
+        "آپ کرشی رکشاک (KrishiRakshak) ہیں، ہندوستانی کسانوں کے لیے ماہر AI زرعی معاون۔ "
+        "ہمیشہ صاف، آسان اردو زبان میں فصلوں، کھاد اور کیڑوں کے تدارک کے بارے میں مفید رہنمائی فراہم کریں۔"
+    ),
+}
 
 
 def _make_rag_tool() -> Tool:
@@ -86,13 +121,24 @@ def run_agent(
         llm = get_llm()
     except Exception as ex:
         logger.warning(f"LLM client setup notice: {ex}")
-    lang_clean = language.lower()
-    if lang_clean in ("hindi", "hi"):
-        system_prompt = SYSTEM_PROMPT_HI
-    elif lang_clean in ("punjabi", "pa"):
-        system_prompt = SYSTEM_PROMPT_PA
+
+    # Resolve effective language and handle auto-detection
+    lang_clean = (language or "auto").strip().lower()
+    effective_language = "English"
+    effective_code = "en"
+
+    if lang_clean in ("auto", "auto-detect", "detect", "none", ""):
+        effective_language, effective_code = detect_language(message)
     else:
-        system_prompt = SYSTEM_PROMPT_EN
+        for name, code in SUPPORTED_LANGUAGES.items():
+            if name.lower() in lang_clean or code == lang_clean:
+                effective_language = name
+                effective_code = code
+                break
+        else:
+            effective_language, effective_code = detect_language(message)
+
+    system_prompt = SYSTEM_PROMPTS.get(effective_language, SYSTEM_PROMPTS["English"])
 
     msg_lower = message.lower()
 
@@ -111,48 +157,160 @@ def run_agent(
         "soil_health_card_fertilizer": [
             "soil", "fertilizer", "urea", "dap", "mop", "npk", "soil health", "soil test",
             "khad", "urvarak", "zinc", "potash", "phosphorus", "nitrogen", "pau", "ludhiana",
-            "खाद", "उर्वरक", "यूरिया", "मिट्टी", "सॉइल हेल्थ", "डीएपी", "पोटाश", "जिंक",
-            "ਖਾਦ", "ਯੂਰੀਆ", "ਮਿੱਟੀ", "ਸੋਇਲ ਹੈਲਥ", "ਡੀਏਪੀ", "ਪੋਟਾਸ਼", "ਜ਼ਿੰਕ"
+            # Hindi / Marathi
+            "खाद", "उर्वरक", "यूरिया", "मिट्टी", "सॉइल हेल्थ", "डीएपी", "पोटाश", "जिंक", "खत", "माती", "जमीन",
+            # Punjabi
+            "ਖਾਦ", "ਯੂਰੀਆ", "ਮਿੱਟੀ", "ਸੋਇਲ ਹੈਲਥ", "ਡੀਏਪੀ", "ਪੋਟਾਸ਼", "ਜ਼ਿੰਕ",
+            # Bengali
+            "সার", "ইউরিয়া", "মাটি", "ডিএপি", "পটাশ",
+            # Telugu
+            "ఎరువు", "యూరియా", "మట్టి", "పొటాష్",
+            # Tamil
+            "உரம்", "யூரியா", "மண்",
+            # Gujarati
+            "ખાતર", "જમીન", "માટી", "યુરિયા",
+            # Kannada
+            "ಗೊಬ್ಬರ", "ಯೂರಿಯಾ", "ಮಣ್ಣು",
+            # Malayalam
+            "വളം", "യൂറിയ", "മണ്ണ്",
+            # Urdu
+            "کھاد", "مٹی", "یوریا"
         ],
         "climate_risk_early_warning": [
             "risk", "alert", "warning", "drought", "flood", "heat stress", "frost", "cold wave",
             "heavy rain", "waterlogging", "soil moisture", "lodging", "climate risk", "early warning",
             "sukha", "badh", "pala", "chilling",
-            "जोखिम", "चेतावनी", "अलर्ट", "सूखा", "बाढ़", "पाला", "तुषार", "लू", "अतिवृष्टि", "ओलावृष्टि", "नमी",
-            "ਖ਼ਤਰਾ", "ਚੇਤਾਵਨੀ", "ਸੋਕਾ", "ਹੜ੍ਹ", "ਪਾਲਾ", "ਤਪਸ਼", "ਲੂ", "ਸਿੱਲ੍ਹ"
+            # Hindi / Marathi
+            "जोखिम", "चेतावनी", "अलर्ट", "सूखा", "बाढ़", "पाला", "तुषार", "लू", "अतिवृष्टि", "ओलावृष्टि", "नमी", "धोका", "दुष्काळ",
+            # Punjabi
+            "ਖ਼ਤਰਾ", "ਚੇਤਾਵਨੀ", "ਸੋਕਾ", "ਹੜ੍ਹ", "ਪਾਲਾ", "ਤਪਸ਼", "ਲੂ", "ਸਿੱਲ੍ਹ",
+            # Bengali
+            "ঝুঁকি", "সতর্কতা", "খরা", "বন্যা", "অতিবৃষ্টি",
+            # Telugu
+            "ప్రమాదం", "హెచ్చరిక", "కరువు", "వరదలు",
+            # Tamil
+            "எச்சரிக்கை", "வறட்சி", "வெள்ளம்",
+            # Gujarati
+            "ચેતવણી", "જોખમ", "દુષ્કાળ", "પૂર",
+            # Kannada
+            "ಎಚ್ಚರಿಕೆ", "ಬರಗಾಲ", "ಪ್ರವಾಹ",
+            # Malayalam
+            "മുന്നറിയിപ്പ്", "വരൾച്ച", "വെള്ളപ്പൊക്കം",
+            # Urdu
+            "انتباہ", "خطرہ", "خشک سالی", "سیलाब"
         ],
         "weather_forecast": [
             "weather", "rain", "temperature", "forecast", "mausam", "barish",
             "humidity", "wind", "storm", "climate", "hawa", "thand", "garmi", "advisory",
-            "मौसम", "बारिश", "बरसात", "तापमान", "हवा", "ठंड", "गर्मी", "सलाह",
-            "ਮੌਸਮ", "ਮੀਂਹ", "ਤਾਪਮਾਨ", "ਹਵਾ", "ਬਾਰਿਸ਼", "ਸਲਾਹ"
+            # Hindi / Marathi
+            "मौसम", "बारिश", "बरसात", "तापमान", "हवा", "ठंड", "गर्मी", "सलाह", "हवामान", "पाऊस", "गारपीट",
+            # Punjabi
+            "ਮੌਸਮ", "ਮੀਂਹ", "ਤਾਪਮਾਨ", "ਹਵਾ", "ਬਾਰਿਸ਼", "ਸਲਾਹ",
+            # Bengali
+            "আবহাওয়া", "বৃষ্টি", "তাপমাত্রা", "ঝড়",
+            # Telugu
+            "వాతావరణం", "వర్షం", "ఉష్ణోగ్రత",
+            # Tamil
+            "வானிலை", "மழை", "வெப்பநிலை",
+            # Gujarati
+            "હવામાન", "વરસાદ", "તાપમાન",
+            # Kannada
+            "ಹವಾಮಾನ", "ಮಳೆ", "ತಾಪಮಾನ",
+            # Malayalam
+            "കാലാവസ്ഥ", "മഴ", "താപനില",
+            # Urdu
+            "موسم", "بارش", "درجہ حرارت"
         ],
         "crop_recommendation": [
             "crop", "season", "kharif", "rabi", "zaid", "sow", "plant", "fasal",
             "beej", "variety", "yield", "gehun", "wheat", "rice", "chawal", "dhan",
             "makka", "corn", "cotton", "kapas", "mustard", "sarson", "potato", "aloo",
             "sowing", "harvest",
+            # Hindi / Marathi
             "फसल", "खरीफ", "रबी", "जायद", "बोने", "बीज", "पैदावार", "किस्म", "गेहूं",
-            "धान", "चावल", "मक्का", "कपास", "सरसों", "आलू",
-            "ਫਸਲ", "ਕਣਕ", "ਝੋਨਾ", "ਬੀਜ", "ਖਰੀਫ", "ਰਬੀ", "ਮੱਕੀ", "ਕਪਾਹ", "ਆਲੂ"
+            "धान", "चावल", "मक्का", "कपास", "सरसों", "आलू", "पीक", "बियाणे", "उत्पादन",
+            # Punjabi
+            "ਫਸਲ", "ਕਣਕ", "ਝੋਨਾ", "ਬੀਜ", "ਖਰੀਫ", "ਰਬੀ", "ਮੱਕੀ", "ਕਪਾਹ", "ਆਲੂ",
+            # Bengali
+            "ফসল", "ধান", "গম", "বীজ", "রবি", "খরিফ",
+            # Telugu
+            "పంట", "వరి", "గోధుమ", "విత్తనాలు",
+            # Tamil
+            "பயிர்", "நெல்", "கோதுமை", "விதை",
+            # Gujarati
+            "પાક", "ઘઉં", "ડાંગર", "બિયારણ",
+            # Kannada
+            "ಬೆಳೆ", "ಭತ್ತ", "ಗೋಧಿ", "ಬೀಜ",
+            # Malayalam
+            "വിള", "നെല്ല്", "ഗോതമ്പ്", "വിത്ത്",
+            # Urdu
+            "فصل", "گندم", "چاول", "بیج"
         ],
         "pest_disease_control": [
             "pest", "insect", "keet", "keda", "illia", "sundhi", "spray",
             "pesticide", "neem", "caterpillar", "aphid", "borer",
-            "कीट", "कीड़ा", "रोकथाम", "दवा", "कीटनाशक", "नीम", "स्प्रे",
-            "ਕੀੜੇ", "ਸੁੰਡੀ", "ਸਪਰੇਅ", "ਕੀਟਨਾਸ਼ਕ", "ਰੋਕਥਾਮ", "ਤੇਲਾ"
+            # Hindi / Marathi
+            "कीट", "कीड़ा", "रोकथाम", "दवा", "कीटनाशक", "नीम", "स्प्रे", "कीड", "अळी", "फवारणी",
+            # Punjabi
+            "ਕੀੜੇ", "ਸੁੰਡੀ", "ਸਪਰੇਅ", "ਕੀਟਨਾਸ਼ਕ", "ਰੋਕਥਾਮ", "ਤੇਲਾ",
+            # Bengali
+            "কীটপতঙ্গ", "পোকা", "কীটনাশক", "স্প্রে",
+            # Telugu
+            "కీటకాలు", "పురుగు", "పురుగుమందు", "స్ప్రే",
+            # Tamil
+            "பூச்சி", "பூச்சிக்கொல்லி", "தெளிப்பு",
+            # Gujarati
+            "જીવાત", "ઇયળ", "જંતુનાશક", "છંટકાવ",
+            # Kannada
+            "ಕೀಟ", "ಹುಳು", "ಕೀಟನಾಶಕ",
+            # Malayalam
+            "കീടങ്ങൾ", "കീടനാശിനി", "സ്പ്രേ",
+            # Urdu
+            "کیڑے", "کیڑے مار دوا", "سپرے"
         ],
         "disease_info": [
             "disease", "leaf", "symptom", "treatment", "bimari", "rog", "blight",
             "rust", "spot", "yellow", "curl", "fungus", "wilt", "rot",
-            "रोग", "बीमारी", "झुलसा", "जंग", "धब्बा", "पत्ती", "फफूंद",
-            "ਬਿਮਾਰੀ", "ਪੱਤੇ", "ਪੱਤਿਆਂ", "ਪੀਲੇ", "ਧੱਬੇ", "ਕੁੰਗੀ", "ਝੁਲਸਾ", "ਫੰਗਸ", "ਰੋਗ", "ਟਮਾਟਰ"
+            # Hindi / Marathi
+            "रोग", "बीमारी", "झुलसा", "जंग", "धब्बा", "पत्ती", "फफूंद", "बुरशी", "रोगराई",
+            # Punjabi
+            "ਬਿਮਾਰੀ", "ਪੱਤੇ", "ਪੱਤਿਆਂ", "ਪੀਲੇ", "ਧੱਬੇ", "ਕੁੰਗੀ", "ਝੁਲਸਾ", "ਫੰਗਸ", "ਰੋਗ", "ਟਮਾਟਰ",
+            # Bengali
+            "রোগ", "পাতা", "দাগ", "হলুদ", "ছত্রাক",
+            # Telugu
+            "తెగులు", "వ్యాధి", "ఆకులు", "మచ్చలు", "శిలీంధ్రం",
+            # Tamil
+            "நோய்", "இலை", "புள்ளி", "பூஞ்சை",
+            # Gujarati
+            "રોગ", "પાંદડા", "ડાઘ", "ફૂગ",
+            # Kannada
+            "ರೋಗ", "ಎಲೆ", "ಮಚ್ಚೆ", "ಶಿಲೀಂಧ್ರ",
+            # Malayalam
+            "രോഗം", "ഇല", "പുള്ളി", "ഫംഗസ്",
+            # Urdu
+            "بیماری", "پتے", "دھبے", "پھپھوندی"
         ],
         "mandi_price_checker": [
             "price", "mandi", "rate", "bhav", "daam", "market", "sell", "cost",
             "msp", "quintal", "rupee", "rs", "bazar", "kharid",
-            "मंडी", "भाव", "दाम", "रेट", "मूल्य", "बाजार", "टमाटर", "क्विंटल", "खरीद", "बेचने",
-            "ਮੰਡੀ", "ਭਾਅ", "ਰੇਟ", "ਕੀਮਤ", "ਕੁਇੰਟਲ"
+            # Hindi / Marathi
+            "मंडी", "भाव", "दाम", "रेट", "मूल्य", "बाजार", "टमाटर", "क्विंटल", "खरीद", "बेचने", "दर", "बाजारभाव",
+            # Punjabi
+            "ਮੰਡੀ", "ਭਾਅ", "ਰੇਟ", "ਕੀਮਤ", "ਕੁਇੰਟਲ",
+            # Bengali
+            "মন্ডি", "দাম", "দর", "বাজার", "মূল্য", "টমেটো",
+            # Telugu
+            "ధర", "మార్కెట్", "రేటు", "మండి", "టమాటా",
+            # Tamil
+            "விலை", "சந்தை", "மண்டி", "தக்காளி",
+            # Gujarati
+            "ભાવ", "બજાર", "મંડી", "કિંમત", "ટમેટા",
+            # Kannada
+            "ಬೆಲೆ", "ಮಾರುಕಟ್ಟೆ", "ದರ", "ಟೊಮೆಟೊ",
+            # Malayalam
+            "വില", "വിപണി", "മാർക്കറ്റ്", "തക്കാളി",
+            # Urdu
+            "بھاؤ", "منڈی", "قیمت", "ریٹ", "بازار"
         ],
     }
 
@@ -197,11 +355,20 @@ def run_agent(
     context = "\n\n".join(tool_outputs) if tool_outputs else "No specific tool data found for this question."
     augmented_message = f"{message} (Farmer's Location: {location})"
 
-    lang_instruction = "Answer in clear, polite, structured English with practical recommendations and an action checklist."
-    if lang_clean in ("hindi", "hi"):
-        lang_instruction = "कृपया उत्तर पूरी तरह से शुद्ध, सरल और आदरणीय हिंदी (Devanagari script) में दें। व्यावहारिक सुझाव, रोकथाम के उपाय और स्पष्ट बुलेट पॉइंट्स या तालिका का उपयोग करें।"
-    elif lang_clean in ("punjabi", "pa"):
-        lang_instruction = "ਕਿਰਪਾ ਕਰਕੇ ਪੂਰਾ ਜਵਾਬ ਸਰਲ ਅਤੇ ਸਪੱਸ਼ਟ ਪੰਜਾਬੀ (Gurmukhi script) ਵਿੱਚ ਦਿਓ। ਕਿਸਾਨ ਵੀਰਾਂ ਲਈ ਵਿਹਾਰਕ ਸਲਾਹ ਅਤੇ ਬੁਲੇਟ ਪੁਆਇੰਟਾਂ ਦੀ ਵਰਤੋਂ ਕਰੋ।"
+    lang_instructions = {
+        "English": "Answer in clear, polite, structured English with practical recommendations and an action checklist.",
+        "Hindi": "कृपया उत्तर पूरी तरह से शुद्ध, सरल और आदरणीय हिंदी (Devanagari script) में दें। व्यावहारिक सुझाव, रोकथाम के उपाय और स्पष्ट बुलेट पॉइंट्स या तालिका का उपयोग करें।",
+        "Punjabi": "ਕਿਰਪਾ ਕਰਕੇ ਪੂਰਾ ਜਵਾਬ ਸਰਲ ਅਤੇ ਸਪੱਸ਼ਟ ਪੰਜਾਬੀ (Gurmukhi script) ਵਿੱਚ ਦਿਓ। ਕਿਸਾਨ ਵੀਰਾਂ ਲਈ ਵਿਹਾਰਕ ਸਲਾਹ ਅਤੇ ਬੁਲੇਟ ਪੁਆਇੰਟਾਂ ਦੀ ਵਰਤੋਂ ਕਰੋ।",
+        "Bengali": "দয়া করে সহজ, স্পষ্ট ও ব্যবহারিক বাংলা ভাষায় উত্তর দিন। বুলেট পয়েন্ট ও সারসংক্ষেপের মাধ্যমে কৃষকের বোধগম্য নির্দেশিকা দিন।",
+        "Telugu": "దయచేసి స్పష్టమైన, సరళమైన తెలుగు భాషలో సమాధానం ఇవ్వండి. రైతులకు ఉపయోగపడే కార్యాచరణ అంశాలు మరియు బుల్లెట్ పాయింట్లను ఉపయోగించండి.",
+        "Marathi": "कृपया सोप्या, अचूक आणि व्यावहारिक मराठी भाषेत उत्तर द्या. शेतकऱ्यांसाठी आवश्यक सूचना व मुद्द्यांचा समावेश करा.",
+        "Tamil": "தயவுசெய்து எளிய, தெளிவான தமிழ் மொழியில் பதிலளிக்கவும். விவசாயிகளுக்கான நடைமுறை ஆலோசனைகளை புல்லட் புள்ளிகளில் வழங்கவும்.",
+        "Gujarati": "કૃપા કરીને સરળ, સ્પષ્ટ ગુજરાતી ભાષામાં જવાબ આપો. ખેડૂતો માટે વ્યવહારુ સલાહ અને મુદ્દાઓ જણાવો.",
+        "Kannada": "ದಯವಿಟ್ಟು ಸರಳ, ಸ್ಪಷ್ಟ ಕನ್ನಡ ಭಾಷೆಯಲ್ಲಿ ಉತ್ತರಿಸಿ. ರೈತರಿಗೆ ಅನುಕೂಲವಾಗುವ ಪ್ರಾಯೋಗಿಕ ಸಲಹೆಗಳನ್ನು ಬುಲೆಟ್ ಪಾಯಿಂಟ್‌ಗಳಲ್ಲಿ ನೀಡಿ.",
+        "Malayalam": "ദയവായി ലളിതമായ മലയാളത്തിൽ കർഷകർക്ക് പ്രയോജനപ്പെടുന്ന പ്രായോഗിക നിർദ്ദേശങ്ങൾ നൽകുക.",
+        "Urdu": "براہ کرم آسان، واضح اردو زبان میں جواب دیں۔ کسانوں کے لیے عملی تجاویز اور اقدامات بلٹ پوائنٹس میں پیش کریں۔",
+    }
+    lang_instruction = lang_instructions.get(effective_language, lang_instructions["English"])
 
     full_prompt = (
         f"{system_prompt}\n\n"
@@ -225,6 +392,8 @@ def run_agent(
                 "response": response.content,
                 "sources": sources,
                 "agent_steps": agent_steps,
+                "language": effective_language,
+                "language_code": effective_code,
             }
         except Exception as e:
             logger.error(f"LLM synthesis error: {e}")
@@ -240,20 +409,42 @@ def run_agent(
 
         retrieved_data = "\n\n---\n\n".join(cleaned_outputs)
 
-        if lang_clean in ("hindi", "hi"):
-            header = "🌾 **सत्यापित कृषि परामर्श एवं मौसम बुलेटिन (रियल-टाइम डेटा):**"
-            footer_tip = "💡 *सुझाव: अधिक विस्तृत AI बातचीत और व्यक्तिगत सवालों के लिए बायीं ओर साइडबार में अपनी Groq API Key दर्ज करें।*"
-        elif lang_clean in ("punjabi", "pa"):
-            header = "🌾 **ਪ੍ਰਮਾਣਿਤ ਖੇਤੀਬਾੜੀ ਸਲਾਹ ਅਤੇ ਮੌਸਮ ਜਾਣਕਾਰੀ (ਰੀਅਲ-ਟਾਈਮ ਡੇਟਾ):**"
-            footer_tip = "💡 *ਸੁਝਾਅ: ਵਿਸਤ੍ਰਿਤ AI ਜਵਾਬਾਂ ਲਈ ਖੱਬੇ ਪਾਸੇ ਸਾਈਡਬਾਰ ਵਿੱਚ ਆਪਣੀ Groq API Key ਦਰਜ ਕਰੋ।*"
-        else:
-            header = "🌾 **Verified Agricultural Advisory & Real-Time Intelligence:**"
-            footer_tip = "💡 *Tip: For interactive conversational answers and custom follow-ups, activate your Groq API key in the left sidebar or in Streamlit Cloud Secrets.*"
+        fallback_headers = {
+            "English": "🌾 **Verified Agricultural Advisory & Real-Time Intelligence:**",
+            "Hindi": "🌾 **सत्यापित कृषि परामर्श एवं मौसम बुलेटिन (रियल-टाइम डेटा):**",
+            "Punjabi": "🌾 **ਪ੍ਰਮਾਣਿਤ ਖੇਤੀਬਾੜੀ ਸਲਾਹ ਅਤੇ ਮੌਸਮ ਜਾਣਕਾਰੀ (ਰੀਅਲ-ਟਾਈਮ ਡੇਟਾ):**",
+            "Bengali": "🌾 **যাচাইকৃত কৃষি পরামর্শ ও আবহাওয়া বুলেটিন (রিয়েল-টাইম তথ্য):**",
+            "Telugu": "🌾 **ధృవీకరించబడిన వ్యవసాయ సలహాలు మరియు వాతావరణ బులెటిన్ (రియల్-టైమ్ డేటా):**",
+            "Marathi": "🌾 **सत्यापित कृषी सल्ला आणि हवामान अंदाज (रिअल-टाइम डेटा):**",
+            "Tamil": "🌾 **சரிபார்க்கப்பட்ட வேளாண்மை ஆலோசனை மற்றும் வானிலை அறிக்கை (நேரலை தரவு):**",
+            "Gujarati": "🌾 **ચકાસાયેલ કૃષિ સલાહ અને હવામાન બુલેટિન (રીઅલ-ટાઇમ ડેટા):**",
+            "Kannada": "🌾 **ಪರಿಶೀಲಿಸಿದ ಕೃಷಿ ಸಲಹೆ ಮತ್ತು ಹವಾಮಾನ ಮಾಹಿತಿ (ನೈಜ-ಸಮಯದ ಡೇಟಾ):**",
+            "Malayalam": "🌾 **സ്ഥിരീകരിച്ച കാർഷിക നിർദ്ദേശങ്ങളും കാലാവസ്ഥാ ബുള്ളറ്റിനും:**",
+            "Urdu": "🌾 **تصدیق شدہ زرعی ایڈوائزری اور موسم کا بلیٹن (ریئل ٹائم ڈیٹا):**",
+        }
+        fallback_footers = {
+            "English": "💡 *Tip: For interactive conversational answers and custom follow-ups, activate your Groq API key in the left sidebar or in Streamlit Cloud Secrets.*",
+            "Hindi": "💡 *सुझाव: अधिक विस्तृत AI बातचीत और व्यक्तिगत सवालों के लिए बायीं ओर साइडबार में अपनी Groq API Key दर्ज करें।*",
+            "Punjabi": "💡 *ਸੁਝਾਅ: ਵਿਸਤ੍ਰਿਤ AI ਜਵਾਬਾਂ ਲਈ ਖੱਬੇ ਪਾਸੇ ਸਾਈਡਬਾਰ ਵਿੱਚ ਆਪਣੀ Groq API Key ਦਰਜ ਕਰੋ।*",
+            "Bengali": "💡 *পরামর্শ: বিস্তারিত AI কথোপকথনের জন্য বাম সাইডবারে আপনার Groq API Key দিন।*",
+            "Telugu": "💡 *సూచన: పూర్తి AI సలహాల కోసం ఎడమ సైడ్‌బార్‌లో మీ Groq API Key నమోదు చేయండి.*",
+            "Marathi": "💡 *टीप: अधिक तपशीलवार AI उत्तरांसाठी डाव्या साइडबारमध्ये तुमची Groq API Key प्रविष्ट करा.*",
+            "Tamil": "💡 *குறிப்பு: விரிவான AI பதில்களுக்கு இடது பக்கப்பட்டியில் உங்கள் Groq API Key உள்ளிடவும்.*",
+            "Gujarati": "💡 *સલાહ: વિગતવાર AI વાતચીત માટે ડાબી સાઇડબારમાં તમારી Groq API Key દાખલ કરો.*",
+            "Kannada": "💡 *ಸಲಹೆ: ವಿವರವಾದ AI ಉತ್ತರಗಳಿಗಾಗಿ ಎಡ ಸೈಡ್‌ಬಾರ್‌ನಲ್ಲಿ ನಿಮ್ಮ Groq API Key ನಮೂದಿಸಿ.*",
+            "Malayalam": "💡 *നിർദ്ദേശം: കൂടുതൽ AI മറുപടികൾക്കായി ഇടതു സൈഡ്ബാറിൽ Groq API Key ചേർക്കുക.*",
+            "Urdu": "💡 *مشورہ: تفصیلی AI گفتگو کے لیے بائیں سائڈبار میں اپنی Groq API Key درج کریں۔*",
+        }
+
+        header = fallback_headers.get(effective_language, fallback_headers["English"])
+        footer_tip = fallback_footers.get(effective_language, fallback_footers["English"])
 
         return {
             "response": f"{header}\n\n{retrieved_data}\n\n---\n{footer_tip}",
             "sources": sources,
             "agent_steps": agent_steps,
+            "language": effective_language,
+            "language_code": effective_code,
         }
 
     return {
@@ -265,4 +456,6 @@ def run_agent(
         ),
         "sources": sources,
         "agent_steps": agent_steps,
+        "language": effective_language,
+        "language_code": effective_code,
     }

@@ -16,9 +16,9 @@ class ChatRequest(BaseModel):
         examples=["What crop should I grow this Kharif season?"],
     )
     language: str = Field(
-        default="English",
-        description="Response language: 'English' or 'Hindi'",
-        examples=["English", "Hindi"],
+        default="auto",
+        description="Response language: 'auto', 'English', 'Hindi', 'Punjabi', etc.",
+        examples=["auto", "English", "Hindi", "Punjabi"],
     )
     location: str = Field(
         default="Delhi",
@@ -48,7 +48,19 @@ class ChatResponse(BaseModel):
         description="Intermediate reasoning steps taken by the agent",
     )
     language: str = Field(default="English", description="Response language used")
+    language_code: Optional[str] = Field(default="en", description="ISO 639-1 language code")
     location: str = Field(default="Delhi", description="Location context used")
+
+
+class LanguageDetectRequest(BaseModel):
+    """Request body for language auto-detection."""
+    text: str = Field(..., min_length=1, max_length=5000, description="Input text to detect language for")
+
+
+class LanguageDetectResponse(BaseModel):
+    """Response body for language auto-detection."""
+    language: str = Field(..., description="Language name (e.g. Punjabi, Telugu, Hindi, English)")
+    language_code: str = Field(..., description="ISO 639-1 language code (e.g. pa, te, hi, en)")
 
 
 class HealthResponse(BaseModel):

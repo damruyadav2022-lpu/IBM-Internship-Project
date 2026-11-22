@@ -17,6 +17,8 @@ from api.models import (
     DiseaseDetectionResponse,
     DetectionResult,
     HealthResponse,
+    LanguageDetectRequest,
+    LanguageDetectResponse,
 )
 from agent.farming_agent import run_agent
 
@@ -59,7 +61,8 @@ async def chat(request: ChatRequest) -> ChatResponse:
             response=result["response"],
             sources=result.get("sources", []),
             agent_steps=steps,
-            language=request.language,
+            language=result.get("language", request.language),
+            language_code=result.get("language_code", "en"),
             location=request.location,
         )
 
@@ -334,10 +337,18 @@ async def voice_speak(
         raise HTTPException(status_code=500, detail=f"TTS failed: {str(e)}")
 
 
+@router.post("/language/detect", response_model=LanguageDetectResponse, tags=["Language"])
+async def detect_input_language(req: LanguageDetectRequest) -> LanguageDetectResponse:
+    """Auto-detect language of input query using Unicode script and vocabulary heuristics."""
+    from voice_assistant import detect_language
+    name, code = detect_language(req.text)
+    return LanguageDetectResponse(language=name, language_code=code)
+
+
 @router.post("/voice/assistant", tags=["Voice Assistant"])
 async def voice_assistant_pipeline(
     file: UploadFile = File(..., description="Spoken voice query"),
-    language: str = "Hindi",
+    language: str = "auto",
     location: str = "Delhi",
 ):
     """
@@ -354,7 +365,7 @@ async def voice_assistant_pipeline(
         query_text = transcribe_audio(
             audio_bytes,
             filename=file.filename or "query.wav",
-            language=language,
+            language=None if language == "auto" else language,
         )
         if not query_text:
             query_text = "फसल सलाह"
@@ -372,7 +383,8 @@ async def voice_assistant_pipeline(
             "response": result["response"],
             "sources": result.get("sources", []),
             "agent_steps": result.get("agent_steps", []),
-            "language": language,
+            "language": result.get("language", language),
+            "language_code": result.get("language_code", "en"),
             "location": location,
         }
     except Exception as e:

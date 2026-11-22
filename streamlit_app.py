@@ -490,7 +490,7 @@ html, body, [class*="css"] {
 
 # ── Session state defaults ────────────────────────────────────────────────────
 if "messages" not in st.session_state: st.session_state.messages = []
-if "language" not in st.session_state: st.session_state.language = "English"
+if "language" not in st.session_state: st.session_state.language = "auto"
 if "location" not in st.session_state: st.session_state.location = "Delhi"
 if "detection" not in st.session_state: st.session_state.detection = None
 if "voice_chat_history" not in st.session_state: st.session_state.voice_chat_history = []
@@ -613,6 +613,8 @@ def call_chat(message: str, language: str, location: str) -> dict:
             "response": f"⚠️ Could not process query: {str(e)}. If deployed on Streamlit Cloud, please verify LLM_API_KEY is configured in Secrets.",
             "sources": [],
             "agent_steps": [],
+            "language": language,
+            "language_code": "en",
         }
 
 @st.cache_resource(show_spinner=False)
@@ -664,7 +666,7 @@ def call_transcribe(audio_bytes: bytes, filename: str = "voice.wav", language: s
     except Exception as e:
         return {"success": False, "text": "", "error": str(e)}
 
-def call_tts(text: str, language: str = "English") -> bytes:
+def call_tts(text: str, language: str = "auto") -> bytes:
     try:
         sys.path.insert(0, str(ROOT / "backend"))
         from voice_assistant import generate_speech
@@ -742,14 +744,46 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     st.markdown("##### 🌐 Language / ਬੋਲੀ / भाषा")
-    st.session_state.language = st.radio(
+    UI_LANGUAGES = [
+        "🌐 Auto-Detect (ਸਵੈ-ਖੋਜ / स्वचालित)",
+        "🇬🇧 English",
+        "🇮🇳 Hindi (हिन्दी)",
+        "🌾 Punjabi (ਪੰਜਾਬੀ)",
+        "🌾 Bengali (বাংলা)",
+        "🌾 Telugu (తెలుగు)",
+        "🌾 Marathi (मराठी)",
+        "🌾 Tamil (தமிழ்)",
+        "🌾 Gujarati (ગુજરાતી)",
+        "🌾 Kannada (ಕನ್ನಡ)",
+        "🌾 Malayalam (മലയാളം)",
+        "🌾 Urdu (اردو)",
+    ]
+    cur_lang_val = st.session_state.get("language", "auto")
+    default_lang_idx = 0
+    for idx_u, opt_u in enumerate(UI_LANGUAGES):
+        if cur_lang_val == "auto" and "Auto-Detect" in opt_u:
+            default_lang_idx = idx_u
+            break
+        elif cur_lang_val.lower() in opt_u.lower():
+            default_lang_idx = idx_u
+            break
+
+    chosen_ui_lang = st.selectbox(
         "Interface Language",
-        ["English", "Hindi", "Punjabi"],
-        format_func=lambda x: "🇬🇧 English" if x == "English" else ("🇮🇳 हिन्दी" if x == "Hindi" else "🌾 ਪੰਜਾਬੀ"),
-        horizontal=True,
-        index=0 if st.session_state.language == "English" else (1 if st.session_state.language == "Hindi" else 2),
+        UI_LANGUAGES,
+        index=default_lang_idx,
         label_visibility="collapsed",
+        key="ui_language_selector",
     )
+    if "Auto-Detect" in chosen_ui_lang:
+        st.session_state.language = "auto"
+    else:
+        st.session_state.language = "English"
+        for l_name in ["Hindi", "Punjabi", "Bengali", "Telugu", "Marathi", "Tamil", "Gujarati", "Kannada", "Malayalam", "Urdu", "English"]:
+            if l_name.lower() in chosen_ui_lang.lower():
+                st.session_state.language = l_name
+                break
+    st.session_state.language_display = chosen_ui_lang
 
     st.markdown("##### 📍 Your Farming Region")
     st.session_state.location = st.selectbox(
@@ -904,7 +938,7 @@ st.markdown(f"""
 <div class="telemetry-ribbon">
     <div class="telemetry-item">📍 Active Region: <b>{st.session_state.location}</b></div>
     <div class="telemetry-item">🌾 Season: <b>Rabi 2026</b></div>
-    <div class="telemetry-item">🌐 Language: <b>{st.session_state.language}</b></div>
+    <div class="telemetry-item">🌐 Language: <b>{st.session_state.get('language_display', st.session_state.language)}</b></div>
     <div class="telemetry-item">⚡ Engine: <b>Sub-Second Autonomous Multi-Agent</b></div>
     <div class="telemetry-item">🛰️ Telemetry: <b>Live Satellite & Mandi Feeds Synced</b></div>
 </div>
@@ -936,6 +970,14 @@ with tab_chat:
     """, unsafe_allow_html=True)
 
     quick_qs = {
+        "auto": [
+            ("🌾 Rabi Season", "What crop is best for this rabi season?"),
+            ("🌧️ मौसम सलाह (Hindi)", "आज की मौसम और कृषि सलाह क्या है?"),
+            ("🌾 ਕਣਕ ਕੁੰਗੀ (Punjabi)", "ਕਣਕ ਦੀ ਫਸਲ ਵਿੱਚ ਪੀਲੀ ਕੁੰਗੀ ਦੀ ਰੋਕਥਾਮ ਕਿਵੇਂ ਕਰੀਏ?"),
+            ("💰 Mandi Tomato", "What is today's mandi rate for tomatoes in Delhi?"),
+            ("🌱 সার প্রয়োগ (Bengali)", "আলু ও সরিষা চাষের জন্য সুষম সার প্রয়োগের নিয়ম কী?"),
+            ("🌾 పంట రక్షణ (Telugu)", "వరి పంటలో తెగుళ్ల నివారణకు తీసుకోవలసిన చర్యలు ఏమిటి?"),
+        ],
         "English": [
             ("🌾 Rabi Season", "What crop is best for this rabi season?"),
             ("🌧️ Weather Advisory", "What is today's farming weather advisory?"),
@@ -960,10 +1002,34 @@ with tab_chat:
             ("🌱 ਖਾਦ ਪ੍ਰਬੰਧ", "ਸਰ੍ਹੋਂ ਦੀ ਫਸਲ ਲਈ ਖਾਦ ਅਤੇ ਪਾਣੀ ਦਾ ਪ੍ਰਬੰਧ ਕੀ ਹੈ?"),
             ("🔍 ਰੋਗ ਇਲਾਜ", "ਟਮਾਟਰ ਦੇ ਪੱਤਿਆਂ ਤੇ ਪੀਲੇ ਧੱਬਿਆਂ ਦਾ ਇਲਾਜ ਕੀ ਹੈ?"),
         ],
+        "Bengali": [
+            ("🌾 রবি ফসল", "এই রবি মরসুমে কোন ফসল চাষ সবচেয়ে লাভজনক?"),
+            ("🌧️ আবহাওয়া তথ্য", "আজকের কৃষিজ আবহাওয়া বার্তা কী?"),
+            ("💰 বাজারের দর", "আজ বাজারে আলু ও টমেটোর পাইকারি দাম কত?"),
+            ("🐛 পোকা দমন", "সরিষা ও গমের পোকা দমনে কী স্প্রে করব?"),
+            ("🌱 সুষম সার", "আলু চাষে ইউরিয়া ও পটাশ সারের সঠিক মাত্রা কী?"),
+            ("🔍 রোগ প্রতিকার", "টমেটোর পাতা কোঁকড়ানো রোগের চিকিৎসা কী?"),
+        ],
+        "Telugu": [
+            ("🌾 రబీ పంటలు", "ఈ రబీ సీజన్‌లో ఏ పంట వేస్తే ఎక్కువ లాభం వస్తుంది?"),
+            ("🌧️ వాతావరణం", "ఈ రోజు వ్యవసాయ వాతావరణ సలహా ఏమిటి?"),
+            ("💰 మార్కెట్ ధరలు", "ఈ రోజు టమాటా మరియు ఉల్లిపాయ మార్కెట్ రేటు ఎంత?"),
+            ("🐛 తెగుళ్ల నివారణ", "వరి లేదా గోధుమ పంటలో తెగుళ్లను ఎలా అరికట్టాలి?"),
+            ("🌱 ఎరువుల మోతాదు", "వరి పంటకు యూరియా మరియు డీఏపీ ఎప్పుడు వేయాలి?"),
+            ("🔍 పంట వ్యాధులు", "టమాటా ఆకు మచ్చల నివారణకు మందు ఏమిటి?"),
+        ],
+        "Marathi": [
+            ("🌾 रब्बी पिके", "या रब्बी हंगामात कोणते पीक घेणे फायदेशीर ठरेल?"),
+            ("🌧️ हवामान सल्ला", "आजचा कृषी हवामान अंदाज काय आहे?"),
+            ("💰 बाजारभाव", "आज मंडईत टोमॅटो आणि कांद्याचे भाव काय आहेत?"),
+            ("🐛 कीड नियंत्रण", "गहू पिकावरील तांबेरा रोगाचे नियंत्रण कसे करावे?"),
+            ("🌱 खत व्यवस्थापन", "हरभरा आणि गव्हासाठी संतुलित खत मात्रा काय आहे?"),
+            ("🔍 रोग निदान", "टोमॅटोच्या पानांवरील पिवळ्या डागांवर काय उपाय करावा?"),
+        ],
     }
 
     cols = st.columns(3)
-    active_questions = quick_qs.get(st.session_state.language, quick_qs["English"])
+    active_questions = quick_qs.get(st.session_state.language, quick_qs.get("auto", quick_qs["English"]))
     for i, (label, q) in enumerate(active_questions):
         with cols[i % 3]:
             if st.button(f"{label}: {q[:32]}...", width="stretch", key=f"quick_btn_{i}", help=q):
@@ -975,6 +1041,8 @@ with tab_chat:
                     "content": result.get("response", ""),
                     "sources": result.get("sources", []),
                     "steps": result.get("agent_steps", []),
+                    "language": result.get("language", "English"),
+                    "language_code": result.get("language_code", "en"),
                 })
                 st.rerun()
 
@@ -988,7 +1056,7 @@ with tab_chat:
             <div style="text-align:center;padding:2.5rem 1rem;color:#94a3b8;">
                 <span style="font-size:3rem;">🌾</span><br>
                 <b style="font-size:1.25rem;color:#34d399;">Welcome to KrishiRakshak AI</b><br>
-                <span style="color:#cbd5e1;">Ask about crop calendars, pest management, live weather forecasts, or APMC mandi rates.</span>
+                <span style="color:#cbd5e1;">Ask about crop calendars, pest management, live weather forecasts, or APMC mandi rates in any Indian language.</span>
             </div>
             """, unsafe_allow_html=True)
         else:
@@ -997,11 +1065,13 @@ with tab_chat:
                     st.markdown(f'<div class="chat-bubble-user">🧑‍🌾 <b>Farmer ({st.session_state.location}):</b><br>{msg["content"]}</div>', unsafe_allow_html=True)
                 else:
                     sources_html = "".join([f'<span class="source-tag">📌 {s}</span>' for s in msg.get("sources", [])])
+                    msg_lang = msg.get("language", "")
+                    lang_tag = f'<span style="font-size:0.72rem;background:#064e3b;color:#a7f3d0;padding:2px 8px;border-radius:10px;border:1px solid #059669;margin-left:8px;">🗣️ {msg_lang}</span>' if msg_lang else ""
                     st.markdown(
                         f'<div class="chat-bubble-assistant">'
                         f'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
                         f'<div style="display:flex;align-items:center;gap:8px;">'
-                        f'<span style="font-size:1.2rem;">🌾</span><b style="color:#34d399;">KrishiRakshak AI:</b>'
+                        f'<span style="font-size:1.2rem;">🌾</span><b style="color:#34d399;">KrishiRakshak AI:</b>{lang_tag}'
                         f'</div>'
                         f'<span style="font-size:0.75rem;color:#94a3b8;">Grounded Real-Time Advisory</span>'
                         f'</div>'
@@ -1018,7 +1088,7 @@ with tab_chat:
                         with c_aud:
                             if st.button("🔊 Listen", key=f"listen_btn_t1_{idx}", help="Listen to spoken audio"):
                                 with st.spinner("Synthesizing speech..."):
-                                    msg["audio"] = call_tts(msg["content"], st.session_state.language)
+                                    msg["audio"] = call_tts(msg["content"], language=msg.get("language", "auto"))
                                 st.rerun()
 
                     steps = msg.get("steps", [])
@@ -1035,7 +1105,7 @@ with tab_chat:
         c_inp, c_btn = st.columns([5, 1])
         user_input = c_inp.text_input(
             "Ask KrishiRakshak a farming question:",
-            placeholder="Type your question in English, हिन्दी, or ਪੰਜਾਬੀ... (e.g. Best fertilizer for wheat?)",
+            placeholder="Ask in any language: English, हिन्दी, ਪੰਜਾਬੀ, বাংলা, తెలుగు, मराठी, தமிழ், ગુજરાતી... (e.g. Best fertilizer for wheat?)",
             label_visibility="collapsed",
         )
         submit_chat = c_btn.form_submit_button("Send 🚀", width="stretch")
@@ -1049,6 +1119,8 @@ with tab_chat:
             "content": result.get("response", ""),
             "sources": result.get("sources", []),
             "steps": result.get("agent_steps", []),
+            "language": result.get("language", "English"),
+            "language_code": result.get("language_code", "en"),
         })
         st.rerun()
 
@@ -1081,13 +1153,34 @@ with tab_voice:
     # Header Controls: Language Selector & Action Buttons
     c_vh1, c_vh2 = st.columns([3, 1])
     with c_vh1:
-        v_lang_sel = st.radio(
+        VOICE_LANG_CHOICES = [
+            "🌐 Auto-Detect Voice (All Languages)",
+            "🇮🇳 Hindi (हिंदी)",
+            "🌾 Punjabi (ਪੰਜਾਬੀ)",
+            "🇬🇧 English",
+            "🌾 Bengali (বাংলা)",
+            "🌾 Telugu (తెలుగు)",
+            "🌾 Marathi (मराठी)",
+            "🌾 Tamil (தமிழ்)",
+            "🌾 Gujarati (ગુજરાતી)",
+            "🌾 Kannada (ಕನ್ನಡ)",
+            "🌾 Malayalam (മലയാളം)",
+            "🌾 Urdu (اردو)",
+        ]
+        v_lang_sel = st.selectbox(
             "Select Voice Language / ਬੋਲੀ / भाषा:",
-            ["Hindi (हिंदी)", "Punjabi (ਪੰਜਾਬੀ)", "English"],
-            horizontal=True,
-            key="v_lang_sel_radio",
+            VOICE_LANG_CHOICES,
+            index=0,
+            key="v_lang_sel_select",
         )
-        clean_vlang = "Hindi" if "Hindi" in v_lang_sel else ("Punjabi" if "Punjabi" in v_lang_sel else "English")
+        if "Auto-Detect" in v_lang_sel:
+            clean_vlang = "auto"
+        else:
+            clean_vlang = "English"
+            for ln in ["Hindi", "Punjabi", "Bengali", "Telugu", "Marathi", "Tamil", "Gujarati", "Kannada", "Malayalam", "Urdu", "English"]:
+                if ln.lower() in v_lang_sel.lower():
+                    clean_vlang = ln
+                    break
 
     with c_vh2:
         c_vclr, c_vexp = st.columns(2)
@@ -1112,7 +1205,14 @@ with tab_voice:
 
     # 1-Tap Quick Spoken Query Chips
     st.markdown("<small style='color:#a7f3d0;font-weight:600;'>💡 Tap any quick spoken prompt to hear instant voice advice:</small>", unsafe_allow_html=True)
-    if clean_vlang == "Hindi":
+    if clean_vlang == "auto":
+        voice_presets = [
+            ("🌾 ਪੰਜਾਬੀ ਕਣਕ ਕੁੰਗੀ", "ਕਣਕ ਦੀ ਫਸਲ ਵਿੱਚ ਪੀਲੀ ਕੁੰਗੀ ਦੀ ਰੋਕਥਾਮ ਕਿਵੇਂ ਕਰੀਏ?"),
+            ("🍅 टमाटर रोग (Hindi)", "मेरे टमाटर के पत्तों पर पीले धब्बे आ रहे हैं, इसका इलाज क्या है?"),
+            ("💰 మార్కెట్ ధరలు (Telugu)", "ఈ రోజు మార్కెట్లో టమాటా మరియు బంగాళాదుంప ధర ఎంత?"),
+            ("🌾 Rabi Wheat (English)", "What crop is best for this rabi season?"),
+        ]
+    elif clean_vlang == "Hindi":
         voice_presets = [
             ("🍅 टमाटर रोग सलाह", "मेरे टमाटर के पत्तों पर पीले धब्बे आ रहे हैं, इसका इलाज क्या है?"),
             ("💰 दिल्ली मंडी भाव", "आज दिल्ली और आज़ादपुर मंडी में टमाटर और आलू का क्या भाव है?"),
@@ -1125,6 +1225,27 @@ with tab_voice:
             ("🌾 ਕਣਕ ਪੀਲੀ ਕੁੰਗੀ", "ਕਣਕ ਦੀ ਫਸਲ ਵਿੱਚ ਪੀਲੀ ਕੁੰਗੀ ਦੀ ਰੋਕਥਾਮ ਕਿਵੇਂ ਕਰੀਏ?"),
             ("💰 ਮੰਡੀ ਭਾਅ ਅੱਪਡੇਟ", "ਅੱਜ ਮੰਡੀ ਵਿੱਚ ਟਮਾਟਰ ਅਤੇ ਆਲੂ ਦਾ ਰੇਟ ਕੀ ਹੈ?"),
             ("🌧️ ਸਪਰੇਅ ਮੌਸਮ ਸਲਾਹ", "ਕੀ ਅੱਜ ਖੇਤ ਵਿੱਚ ਸਪਰੇਅ ਕਰਨਾ ਸਹੀ ਰਹੇਗਾ?"),
+        ]
+    elif clean_vlang == "Bengali":
+        voice_presets = [
+            ("🍅 টমেটো পাতার রোগ", "আমার টমেটো গাছের পাতায় হলুদ দাগ ও কুঁকড়ে যাচ্ছে, প্রতিকার কী?"),
+            ("🌾 ধানের ফলন বৃদ্ধি", "বোরো ধানের ফলন বৃদ্ধির জন্য কোন সার ও পরিচর্যা প্রয়োজন?"),
+            ("💰 আলুর বাজার দর", "আজ বাজারে আলু ও টমেটোর পাইকারি দর কত?"),
+            ("🌧️ স্প্রে আবহাওয়া", "আজ জমিতে কীটনাশক স্প্রে করার জন্য আবহাওয়া কি অনুকূল?"),
+        ]
+    elif clean_vlang == "Telugu":
+        voice_presets = [
+            ("🍅 టమాటా ఆకు మచ్చలు", "నా టమాటా మొక్కల ఆకులపై పసుపు మచ్చలు వస్తున్నాయి, నివారణ ఏమిటి?"),
+            ("🌾 వరి ఎరువుల యాజమాన్యం", "వరి పంటకు సమతుల్య ఎరువుల మోతాదు మరియు సమయం తెలపండి."),
+            ("💰 మార్కెట్ ధరలు", "ఈ రోజు మార్కెట్లో కూరగాయల ధరలు ఎలా ఉన్నాయి?"),
+            ("🌧️ స్ప్రే వాతావరణం", "ఈ రోజు పురుగుమందుల పిచికారీ చేయడానికి వాతావరణం అనుకూలమా?"),
+        ]
+    elif clean_vlang == "Marathi":
+        voice_presets = [
+            ("🍅 टोमॅटो रोग सल्ला", "माझ्या टोमॅटोच्या पानांवर पिवळे डाग पडले आहेत, काय उपाय करावा?"),
+            ("🌾 गहू खत व्यवस्थापन", "रब्बी गव्हाच्या भरघोस उत्पादनासाठी कोणती खते द्यावीत?"),
+            ("💰 बाजारभाव अपडेट", "आज भाजीपाला आणि कांद्याचे बाजारभाव काय आहेत?"),
+            ("🌧️ फवारणी हवामान", "आज शेतात कीटकनाशक फवारणीसाठी हवामान अनुकूल आहे का?"),
         ]
     else:
         voice_presets = [
@@ -1146,10 +1267,14 @@ with tab_voice:
     with voice_chat_box:
         if not st.session_state.voice_chat_history and not preset_triggered_query:
             welcome_lang_text = {
+                "auto": "ਕਿਸੇ ਵੀ ਭਾਸ਼ਾ ਵਿੱਚ ਬੋਲੋ • किसी भी भाषा में बोलें • Speak in any language — auto-detected & answered natively.",
                 "Hindi": "बोलकर या लिखकर खेती से जुड़ी कोई भी सलाह पूछें। मैं हिंदी में बोलकर और लिखकर उपाय बताऊंगा।",
                 "Punjabi": "ਬੋਲ ਕੇ ਜਾਂ ਲਿਖ ਕੇ ਖੇਤੀਬਾੜੀ ਸਲਾਹ ਪੁੱਛੋ। ਮੈਂ ਪੰਜਾਬੀ ਵਿੱਚ ਬੋਲ ਕੇ ਸਹੀ ਹੱਲ ਦੱਸਾਂਗਾ।",
+                "Bengali": "মুখে বলে বা লিখে কৃষির যে কোনো প্রশ্ন করুন। বাংলায় সমাধান ও পরামর্শ দেওয়া হবে।",
+                "Telugu": "మాట్లాడి లేదా టైప్ చేసి వ్యవసాయ సలహాలు పొందండి. స్వచ్ఛమైన తెలుగులో సమాధానం లభిస్తుంది.",
+                "Marathi": "बोलून किंवा लिहून शेतीविषयक मार्गदर्शन मिळवा. मराठीत अचूक उत्तरे मिळतील.",
                 "English": "Speak naturally or select a suggestion to receive real-time spoken audio prescriptions & agronomy advice.",
-            }.get(clean_vlang, "")
+            }.get(clean_vlang, "Speak naturally in your preferred language to receive real-time spoken audio prescriptions.")
 
             st.markdown(f"""
             <div style="background:radial-gradient(circle, #0d2820 0%, #13242e 80%);border:1px solid #1e3a47;border-radius:18px;padding:2.5rem 1.5rem;text-align:center;color:#94a3b8;margin:1rem 0;">
@@ -1160,7 +1285,7 @@ with tab_voice:
                 <b style="color:#ffffff;font-size:1.25rem;">KrishiRakshak Voice AI Chatbot</b><br>
                 <span style="color:#34d399;font-weight:600;font-size:0.95rem;">{welcome_lang_text}</span><br>
                 <span style="font-size:0.85rem;display:inline-block;max-width:520px;margin-top:10px;color:#cbd5e1;">
-                    Tap the microphone below to speak, click any quick prompt chip above, or type your question. Every answer includes a natural voice audio prescription.
+                    Tap the microphone below to speak, click any quick prompt chip above, or type your question. Every answer includes a natural voice audio prescription in your language.
                 </span>
             </div>
             """, unsafe_allow_html=True)
@@ -1218,16 +1343,17 @@ with tab_voice:
 
     # Trigger handling for preset chips
     if preset_triggered_query:
-        with st.spinner(f"🧠 KrishiRakshak reasoning & generating spoken audio in {clean_vlang}..."):
+        with st.spinner("🧠 KrishiRakshak reasoning & generating spoken audio..."):
             agent_res = call_chat(preset_triggered_query, clean_vlang, st.session_state.location)
             resp_text = agent_res.get("response", "")
             sources = agent_res.get("sources", [])
-            speech_bytes = call_tts(resp_text, clean_vlang)
+            resp_lang = agent_res.get("language", clean_vlang if clean_vlang != "auto" else "English")
+            speech_bytes = call_tts(resp_text, language=resp_lang)
             st.session_state.voice_chat_history.append({
                 "query": preset_triggered_query,
                 "response": resp_text,
                 "audio": speech_bytes,
-                "lang": clean_vlang,
+                "lang": resp_lang,
                 "sources": sources,
                 "user_audio": None,
             })
@@ -1241,7 +1367,7 @@ with tab_voice:
         st.markdown("<b style='color:#34d399;'>🎙️ Speak Question (Mic):</b>", unsafe_allow_html=True)
         if hasattr(st, "audio_input"):
             mic_audio = st.audio_input(
-                f"Tap mic to speak in {clean_vlang}:",
+                f"Tap mic to speak ({'Auto-Detect' if clean_vlang == 'auto' else clean_vlang}):",
                 key=f"voice_bot_mic_{len(st.session_state.voice_chat_history)}",
                 label_visibility="collapsed",
             )
@@ -1254,16 +1380,17 @@ with tab_voice:
                         stt = call_transcribe(audio_bytes, language=clean_vlang)
                         if stt.get("success") and stt.get("text"):
                             q_text = stt.get("text")
-                            with st.spinner(f"🧠 KrishiRakshak diagnosing in {clean_vlang}..."):
+                            with st.spinner("🧠 KrishiRakshak diagnosing in your language..."):
                                 agent_res = call_chat(q_text, clean_vlang, st.session_state.location)
                                 resp_text = agent_res.get("response", "")
                                 sources = agent_res.get("sources", [])
-                                speech_bytes = call_tts(resp_text, clean_vlang)
+                                resp_lang = agent_res.get("language", "English")
+                                speech_bytes = call_tts(resp_text, language=resp_lang)
                                 st.session_state.voice_chat_history.append({
                                     "query": q_text,
                                     "response": resp_text,
                                     "audio": speech_bytes,
-                                    "lang": clean_vlang,
+                                    "lang": resp_lang,
                                     "sources": sources,
                                     "user_audio": audio_bytes,
                                 })
@@ -1279,21 +1406,22 @@ with tab_voice:
             c_tin, c_tsub = st.columns([4, 1])
             typed_val = c_tin.text_input(
                 "Type question:",
-                placeholder=f"Ask in {clean_vlang} (e.g. टमाटर रोग का उपचार / What fertilizer for wheat?)...",
+                placeholder=f"Ask in {'any language' if clean_vlang == 'auto' else clean_vlang} (e.g. टमाटर रोग का उपचार / What fertilizer for wheat?)...",
                 label_visibility="collapsed",
             )
             submit_voice_txt = c_tsub.form_submit_button("Send & Speak 🎙️", width="stretch")
             if submit_voice_txt and typed_val.strip():
-                with st.spinner(f"🧠 KrishiRakshak reasoning & generating spoken audio in {clean_vlang}..."):
+                with st.spinner("🧠 KrishiRakshak reasoning & generating spoken audio..."):
                     agent_res = call_chat(typed_val, clean_vlang, st.session_state.location)
                     resp_text = agent_res.get("response", "")
                     sources = agent_res.get("sources", [])
-                    speech_bytes = call_tts(resp_text, clean_vlang)
+                    resp_lang = agent_res.get("language", "English")
+                    speech_bytes = call_tts(resp_text, language=resp_lang)
                     st.session_state.voice_chat_history.append({
                         "query": typed_val,
                         "response": resp_text,
                         "audio": speech_bytes,
-                        "lang": clean_vlang,
+                        "lang": resp_lang,
                         "sources": sources,
                         "user_audio": None,
                     })
@@ -1308,24 +1436,27 @@ with tab_voice:
         )
         if up_voice and st.button("🚀 Process Uploaded Voice File", key="btn_proc_up_voice"):
             up_bytes = up_voice.getvalue()
-            with st.spinner("🎙️ Transcribing uploaded audio file..."):
+            with st.spinner("🎙️ Transcribing uploaded audio file with Whisper..."):
                 stt = call_transcribe(up_bytes, filename=up_voice.name, language=clean_vlang)
                 if stt.get("success") and stt.get("text"):
                     q_text = stt.get("text")
-                    with st.spinner(f"🧠 Reasoning in {clean_vlang}..."):
+                    with st.spinner("🧠 Reasoning in your language..."):
                         agent_res = call_chat(q_text, clean_vlang, st.session_state.location)
                         resp_text = agent_res.get("response", "")
                         sources = agent_res.get("sources", [])
-                        speech_bytes = call_tts(resp_text, clean_vlang)
+                        resp_lang = agent_res.get("language", "English")
+                        speech_bytes = call_tts(resp_text, language=resp_lang)
                         st.session_state.voice_chat_history.append({
                             "query": q_text,
                             "response": resp_text,
                             "audio": speech_bytes,
-                            "lang": clean_vlang,
+                            "lang": resp_lang,
                             "sources": sources,
                             "user_audio": up_bytes,
                         })
                         st.rerun()
+                else:
+                    st.error(f"Audio transcription failed: {stt.get('error', 'Unrecognized audio format')}")
                 else:
                     st.error(f"Audio transcription failed: {stt.get('error', 'Unrecognized audio format')}")
 
@@ -1932,10 +2063,19 @@ with tab_soil:
             land_acres = st.number_input("Land Area (Acres):", min_value=0.5, max_value=100.0, value=2.5, step=0.5, key="shc_acres_input")
 
         with c_pau3:
+            shc_lang_options = [
+                "🌾 Punjabi (ਪੰਜਾਬੀ)",
+                "🇮🇳 Hindi (हिंदी)",
+                "🇬🇧 English",
+                "🌾 Bengali (বাংলা)",
+                "🌾 Telugu (తెలుగు)",
+                "🌾 Marathi (मराठी)",
+            ]
+            shc_def_idx = 0 if "punjabi" in st.session_state.language.lower() else (1 if "hindi" in st.session_state.language.lower() else 2)
             shc_lang = st.selectbox(
                 "Advisory Language:",
-                ["Punjabi (ਪੰਜਾਬੀ)", "Hindi (हिंदी)", "English"],
-                index=0 if st.session_state.language == "Punjabi" else (1 if st.session_state.language == "Hindi" else 2),
+                shc_lang_options,
+                index=shc_def_idx,
                 key="shc_lang_select",
             )
 
@@ -2041,7 +2181,11 @@ with tab_soil:
             st.markdown("<br>", unsafe_allow_html=True)
             c_vox1, c_vox2 = st.columns([2, 3])
             with c_vox1:
-                clean_lang_val = "Punjabi" if "Punjabi" in shc_lang else ("Hindi" if "Hindi" in shc_lang else "English")
+                clean_lang_val = "English"
+                for ln in ["Punjabi", "Hindi", "Bengali", "Telugu", "Marathi", "English"]:
+                    if ln.lower() in shc_lang.lower():
+                        clean_lang_val = ln
+                        break
                 if st.button("🔊 Generate Natural Spoken Audio Advisory", width="stretch", key="btn_gen_shc_audio"):
                     with st.spinner(f"Synthesizing spoken audio in {clean_lang_val}..."):
                         st.session_state.shc_audio = call_tts(plan.get("explanation", ""), language=clean_lang_val)
