@@ -498,6 +498,10 @@ if "voice_chat_history" not in st.session_state: st.session_state.voice_chat_his
 if "shc_data" not in st.session_state: st.session_state.shc_data = None
 if "shc_plan" not in st.session_state: st.session_state.shc_plan = None
 if "shc_audio" not in st.session_state: st.session_state.shc_audio = None
+if "pathology_audio" not in st.session_state: st.session_state.pathology_audio = None
+if "climate_audio" not in st.session_state: st.session_state.climate_audio = None
+if "weather_audio" not in st.session_state: st.session_state.weather_audio = None
+if "mandi_audio" not in st.session_state: st.session_state.mandi_audio = None
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -946,14 +950,26 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
+sys.path.insert(0, str(ROOT / "backend"))
+from services.translation_service import (
+    get_ui_text,
+    get_localized_disease_name,
+    get_spoken_diagnosis_text,
+    translate_text,
+)
+
+active_ui_lang = st.session_state.get("language", "English")
+if not active_ui_lang or active_ui_lang.lower() == "auto":
+    active_ui_lang = "English"
+
 tab_chat, tab_voice, tab_risk, tab_disease, tab_soil, tab_weather, tab_market = st.tabs([
-    "💬 AI Advisor",
-    "🎙️ AI Voice Assistant",
-    "🛡️ Climate Risk & Alerts",
-    "🔬 Plant Pathology (YOLOv8)",
-    "🧪 Soil Health & Fertilizer (PAU)",
-    "🌤️ Real-Time Weather",
-    "💰 Mandi Prices (APMC Live)",
+    get_ui_text("tab_chat", active_ui_lang),
+    get_ui_text("tab_voice", active_ui_lang),
+    get_ui_text("tab_risk", active_ui_lang),
+    get_ui_text("tab_disease", active_ui_lang),
+    get_ui_text("tab_soil", active_ui_lang),
+    get_ui_text("tab_weather", active_ui_lang),
+    get_ui_text("tab_mandi", active_ui_lang),
 ])
 
 # ════════════════════════════════════════════════════════════════════════
@@ -1781,6 +1797,26 @@ with tab_risk:
         for action in preventive:
             st.markdown(action)
 
+        # Spoken Climate Audio Prescription
+        c_rva1, c_rva2 = st.columns([1, 2])
+        with c_rva1:
+            if st.button(f"🔊 Listen Climate Advisory ({active_ui_lang})", key="btn_listen_climate_audio", use_container_width=True):
+                spoken_climate_summary = (
+                    f"Climate Risk Advisory for {risk_assessment.get('location')}. "
+                    f"Vulnerability index is {cvi} out of 100, status {cvi_status}. "
+                    f"Root zone soil moisture is {avg_moist} cubic meters. "
+                    f"{' '.join([a.get('message', '') for a in active_alerts[:2]])} "
+                    f"{' '.join([p.replace('*', '') for p in preventive[:2]])}"
+                )
+                with st.spinner(f"Synthesizing spoken climate advice in {active_ui_lang}..."):
+                    st.session_state.climate_audio = call_tts(spoken_climate_summary, language=active_ui_lang)
+                st.rerun()
+
+        if st.session_state.get("climate_audio"):
+            st.audio(st.session_state.climate_audio, format="audio/mp3", autoplay=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
         # Export report button
         c_exp1, c_exp2 = st.columns([3, 1])
         with c_exp2:
@@ -1935,14 +1971,50 @@ with tab_disease:
 
             st.divider()
 
+            # 🎧 Spoken Diagnosis & Voice Output Card
+            primary_d = det["detections"][0]
+            d_name = primary_d.get("display_name", "")
+            loc_disease = get_localized_disease_name(d_name, active_ui_lang)
+            spoken_script = get_spoken_diagnosis_text(d_name, active_ui_lang)
+
+            st.markdown(f"""
+            <div style="background:radial-gradient(circle, #092c20 0%, #11222c 85%);border:1px solid #10b981;border-radius:14px;padding:1.25rem;margin-bottom:1rem;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span style="font-size:1.4rem;">🎧</span>
+                        <b style="color:#ffffff;font-size:1.05rem;">{get_ui_text('spoken_diagnosis_title', active_ui_lang)}</b>
+                    </div>
+                    <span style="font-size:0.75rem;background:#064e3b;color:#a7f3d0;padding:2px 8px;border-radius:10px;border:1px solid #059669;">🗣️ {active_ui_lang}</span>
+                </div>
+                <div style="font-size:0.92rem;color:#cbd5e1;line-height:1.5;margin-bottom:10px;">
+                    {spoken_script}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            c_sd1, _ = st.columns([1, 2])
+            with c_sd1:
+                if st.button(f"🔊 {get_ui_text('listen_button', active_ui_lang)}", key="btn_play_pathology_voice", use_container_width=True):
+                    with st.spinner("Synthesizing native spoken diagnosis..."):
+                        st.session_state.pathology_audio = call_tts(spoken_script, language=active_ui_lang)
+                    st.rerun()
+
+            if st.session_state.get("pathology_audio"):
+                st.audio(st.session_state.pathology_audio, format="audio/mp3", autoplay=True)
+
+            st.markdown("<br>", unsafe_allow_html=True)
+
             for i, d in enumerate(det["detections"]):
                 sev = d.get("severity", "unknown")
                 emoji = SEVERITY_EMOJI.get(sev, "⚪")
                 conf_pct = d["confidence"] * 100
                 is_primary = (i == 0)
+                item_loc_name = get_localized_disease_name(d["display_name"], active_ui_lang)
 
-                with st.expander(f"{emoji} {'🎯 Primary Diagnosis' if is_primary else f'Candidate #{i+1}'}: **{d['display_name']}** ({conf_pct:.1f}%)", expanded=is_primary):
-                    if d.get("hindi_name"):
+                with st.expander(f"{emoji} {'🎯 Primary Diagnosis' if is_primary else f'Candidate #{i+1}'}: **{item_loc_name}** ({conf_pct:.1f}%)", expanded=is_primary):
+                    if item_loc_name != d["display_name"]:
+                        st.markdown(f"**English / Model Class:** `{d['display_name']}`")
+                    if d.get("hindi_name") and active_ui_lang == "Hindi":
                         st.markdown(f"**हिंदी नाम:** `{d['hindi_name']}`")
 
                     st.progress(safe_clamp(d.get("confidence", 0)), text=f"Model Confidence: {conf_pct:.1f}%")
@@ -1958,7 +2030,12 @@ with tab_disease:
                     treatment = det.get("treatment") if is_primary else None
                     if treatment:
                         st.markdown("---")
-                        tr_tabs = st.tabs(["🍃 Organic Treatment", "💊 Chemical Spray", "🛡️ Prevention", "🌿 Symptoms & Cause"])
+                        tr_tabs = st.tabs([
+                            get_ui_text("organic_treatment", active_ui_lang),
+                            get_ui_text("chemical_spray", active_ui_lang),
+                            get_ui_text("prevention", active_ui_lang),
+                            "🌿 Symptoms & Cause",
+                        ])
 
                         with tr_tabs[0]:
                             st.success(f"**Biological & Organic Control:**\n\n{treatment.get('organic_treatment', 'N/A')}")
@@ -2352,6 +2429,17 @@ with tab_weather:
             st.divider()
             st.success(f"🌾 **Seasonal Agronomic Impact:** {impact}")
 
+        c_wva1, _ = st.columns([1, 2])
+        with c_wva1:
+            if st.button(f"🔊 Listen Weather Advisory ({active_ui_lang})", key="btn_listen_weather_audio", use_container_width=True):
+                spoken_wx = f"Weather forecast for {active_target_city}: Temperature is {curr.get('temperature')} degrees Celsius, condition {curr.get('condition')}. Humidity {curr.get('humidity')} percent. {today_adv} {impact}"
+                with st.spinner(f"Synthesizing spoken weather advisory in {active_ui_lang}..."):
+                    st.session_state.weather_audio = call_tts(spoken_wx, language=active_ui_lang)
+                st.rerun()
+
+        if st.session_state.get("weather_audio"):
+            st.audio(st.session_state.weather_audio, format="audio/mp3", autoplay=True)
+
 
 # ════════════════════════════════════════════════════════════════════════
 # TAB 7 — Real-Time Mandi Prices (APMC Live)
@@ -2411,6 +2499,15 @@ with tab_market:
 
             st.divider()
 
+            CROP_TRANSLATIONS = {
+                "Hindi": {"Wheat": "गेहूं (Wheat)", "Paddy (Dhan)": "धान (Paddy)", "Tomato": "टमाटर (Tomato)", "Potato": "आलू (Potato)", "Mustard": "सरसों (Mustard)", "Onion": "प्याज (Onion)", "Cotton": "कपास (Cotton)", "Maize": "मक्का (Maize)"},
+                "Punjabi": {"Wheat": "ਕਣਕ (Wheat)", "Paddy (Dhan)": "ਝੋਨਾ (Paddy)", "Tomato": "ਟਮਾਟਰ (Tomato)", "Potato": "ਆਲੂ (Potato)", "Mustard": "ਸਰ੍ਹੋਂ (Mustard)", "Onion": "ਪਿਆਜ਼ (Onion)", "Cotton": "ਨਰਮਾ/ਕਪਾਹ (Cotton)", "Maize": "ਮੱਕੀ (Maize)"},
+                "Bengali": {"Wheat": "গম (Wheat)", "Paddy (Dhan)": "ধান (Paddy)", "Tomato": "টমেটো (Tomato)", "Potato": "আলু (Potato)", "Mustard": "সরিষা (Mustard)", "Onion": "পেঁয়াজ (Onion)", "Cotton": "তুলা (Cotton)", "Maize": "ভুট্টা (Maize)"},
+                "Telugu": {"Wheat": "గోధుమ (Wheat)", "Paddy (Dhan)": "వరి (Paddy)", "Tomato": "టమాటా (Tomato)", "Potato": "బంగాళాదుంప (Potato)", "Mustard": "ఆవాలు (Mustard)", "Onion": "ఉల్లిపాయ (Onion)", "Cotton": "ప్రత్తి (Cotton)", "Maize": "మొక్కజొన్న (Maize)"},
+                "Marathi": {"Wheat": "गहू (Wheat)", "Paddy (Dhan)": "भात/धान (Paddy)", "Tomato": "टोमॅटो (Tomato)", "Potato": "बटाटा (Potato)", "Mustard": "मोहरी (Mustard)", "Onion": "कांदा (Onion)", "Cotton": "कापूस (Cotton)", "Maize": "मका (Maize)"},
+            }
+            loc_crops_dict = CROP_TRANSLATIONS.get(active_ui_lang, {})
+
             table_rows = []
             for crop, p in filtered.items():
                 trend = p.get("trend", "stable")
@@ -2419,7 +2516,7 @@ with tab_market:
                 min_val = safe_int(p.get("min", 0))
                 max_val = safe_int(p.get("max", 0))
                 table_rows.append({
-                    "Commodity": crop,
+                    "Commodity": loc_crops_dict.get(crop, crop),
                     "Min Price (₹/q)": f"₹{min_val:,}",
                     "Modal Rate (₹/q)": f"₹{modal_val:,}",
                     "Retail Approx (₹/kg)": f"₹{modal_val/100:.1f}/kg",
@@ -2430,6 +2527,18 @@ with tab_market:
 
             df_mandi = pd.DataFrame(table_rows)
             st.dataframe(df_mandi, use_container_width=True, hide_index=True)
+
+            c_mva1, _ = st.columns([1, 2])
+            with c_mva1:
+                if st.button(f"🔊 Listen Mandi Price Highlights ({active_ui_lang})", key="btn_listen_mandi_audio", use_container_width=True):
+                    top_items = [f"{loc_crops_dict.get(k, k)}: ₹{v.get('modal')} per quintal" for k, v in list(filtered.items())[:3]]
+                    spoken_mandi = f"Mandi market rates at {chosen_mkt}. {', '.join(top_items)}."
+                    with st.spinner("Synthesizing spoken mandi rates..."):
+                        st.session_state.mandi_audio = call_tts(spoken_mandi, language=active_ui_lang)
+                    st.rerun()
+
+            if st.session_state.get("mandi_audio"):
+                st.audio(st.session_state.mandi_audio, format="audio/mp3", autoplay=True)
 
         else:
             st.info(f"No commodities found matching '{crop_search}' at {chosen_mkt}.")
