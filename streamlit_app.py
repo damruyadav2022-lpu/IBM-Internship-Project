@@ -8,6 +8,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 import requests
@@ -824,7 +825,7 @@ with st.sidebar:
             os.environ["LLM_BASE_URL"] = "https://api.groq.com/openai/v1"
             st.rerun()
 
-        if st.button("💾 Apply Key", width="stretch", key="save_groq_key_btn"):
+        if st.button("💾 Apply Key", use_container_width=True, key="save_groq_key_btn"):
             if key_input.strip():
                 st.session_state.user_groq_api_key = key_input.strip()
                 os.environ["LLM_API_KEY"] = key_input.strip()
@@ -1032,7 +1033,7 @@ with tab_chat:
     active_questions = quick_qs.get(st.session_state.language, quick_qs.get("auto", quick_qs["English"]))
     for i, (label, q) in enumerate(active_questions):
         with cols[i % 3]:
-            if st.button(f"{label}: {q[:32]}...", width="stretch", key=f"quick_btn_{i}", help=q):
+            if st.button(f"{label}: {q[:32]}...", use_container_width=True, key=f"quick_btn_{i}", help=q):
                 st.session_state.messages.append({"role": "user", "content": q})
                 with st.spinner("KrishiRakshak reasoning with real-time tools..." if not is_hindi else "कृषि रक्षक वास्तविक समय सलाह तैयार कर रहा है..."):
                     result = call_chat(q, st.session_state.language, st.session_state.location)
@@ -1109,7 +1110,7 @@ with tab_chat:
             placeholder="Ask in any language: English, हिन्दी, ਪੰਜਾਬੀ, বাংলা, తెలుగు, मराठी, தமிழ், ગુજરાતી... (e.g. Best fertilizer for wheat?)",
             label_visibility="collapsed",
         )
-        submit_chat = c_btn.form_submit_button("Send 🚀", width="stretch")
+        submit_chat = c_btn.form_submit_button("Send 🚀", use_container_width=True)
 
     if submit_chat and user_input.strip():
         st.session_state.messages.append({"role": "user", "content": user_input})
@@ -1136,10 +1137,10 @@ with tab_chat:
                     data=last_resp,
                     file_name="KrishiRakshak_Advisory.txt",
                     mime="text/plain",
-                    width="stretch",
+                    use_container_width=True,
                 )
     with c_act3:
-        if st.button("🗑️ Clear Chat", width="stretch"):
+        if st.button("🗑️ Clear Chat", use_container_width=True):
             st.session_state.messages = []
             st.rerun()
 
@@ -1186,7 +1187,7 @@ with tab_voice:
     with c_vh2:
         c_vclr, c_vexp = st.columns(2)
         with c_vclr:
-            if st.button("🗑️ Clear", width="stretch", help="Clear voice chat history", key="clear_voice_chat_btn"):
+            if st.button("🗑️ Clear", use_container_width=True, help="Clear voice chat history", key="clear_voice_chat_btn"):
                 st.session_state.voice_chat_history = []
                 st.rerun()
         with c_vexp:
@@ -1200,7 +1201,7 @@ with tab_voice:
                     data=transcript_text,
                     file_name="KrishiRakshak_Voice_Conversation.txt",
                     mime="text/plain",
-                    width="stretch",
+                    use_container_width=True,
                     key="export_voice_chat_btn",
                 )
 
@@ -1260,7 +1261,7 @@ with tab_voice:
     preset_triggered_query = None
     for p_idx, (p_label, p_query) in enumerate(voice_presets):
         with c_vp[p_idx]:
-            if st.button(p_label, width="stretch", key=f"voice_chip_{p_idx}", help=p_query):
+            if st.button(p_label, use_container_width=True, key=f"voice_chip_{p_idx}", help=p_query):
                 preset_triggered_query = p_query
 
     # Dedicated ChatBot Message Stream Container
@@ -1410,7 +1411,7 @@ with tab_voice:
                 placeholder=f"Ask in {'any language' if clean_vlang == 'auto' else clean_vlang} (e.g. टमाटर रोग का उपचार / What fertilizer for wheat?)...",
                 label_visibility="collapsed",
             )
-            submit_voice_txt = c_tsub.form_submit_button("Send & Speak 🎙️", width="stretch")
+            submit_voice_txt = c_tsub.form_submit_button("Send & Speak 🎙️", use_container_width=True)
             if submit_voice_txt and typed_val.strip():
                 with st.spinner("🧠 KrishiRakshak reasoning & generating spoken audio..."):
                     agent_res = call_chat(typed_val, clean_vlang, st.session_state.location)
@@ -1495,7 +1496,7 @@ with tab_risk:
     ]
     for col, lbl, c_i in crop_buttons:
         with col:
-            if st.button(lbl, width="stretch", key=f"quick_crop_btn_{c_i}"):
+            if st.button(lbl, use_container_width=True, key=f"quick_crop_btn_{c_i}"):
                 st.session_state.risk_selected_crop_idx = c_i
                 st.rerun()
 
@@ -1518,7 +1519,7 @@ with tab_risk:
 
     with col_r4:
         st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-        if st.button("🔄 Analyze Risk", width="stretch", key="risk_refresh_btn"):
+        if st.button("🔄 Analyze Risk", use_container_width=True, key="risk_refresh_btn"):
             get_climate_risk.clear()
             st.rerun()
 
@@ -1804,7 +1805,7 @@ with tab_risk:
                 data=report_str,
                 file_name=f"ClimateRisk_{crop_key}_{active_risk_loc}.txt",
                 mime="text/plain",
-                width="stretch",
+                use_container_width=True,
                 key="btn_export_risk_report",
             )
 
@@ -1879,7 +1880,7 @@ with tab_disease:
             samp_cols = st.columns(2)
             for s_idx, (s_label, s_file) in enumerate(sample_items):
                 with samp_cols[s_idx % 2]:
-                    if st.button(s_label, width="stretch", key=f"sample_pick_btn_{s_idx}"):
+                    if st.button(s_label, use_container_width=True, key=f"sample_pick_btn_{s_idx}"):
                         s_path = sample_dir / s_file
                         if s_path.exists():
                             img = Image.open(s_path)
@@ -1896,9 +1897,9 @@ with tab_disease:
                 leaf_file_name = st.session_state.get("chosen_sample_name", "Preloaded Sample")
 
         if chosen_leaf_img:
-            st.image(chosen_leaf_img, caption=f"Active Sample: {leaf_file_name}", width="stretch")
+            st.image(chosen_leaf_img, caption=f"Active Sample: {leaf_file_name}", use_container_width=True)
 
-            if st.button("🔬 Analyze Leaf & Diagnose Pathology", type="primary", width="stretch", key="run_disease_diag_btn"):
+            if st.button("🔬 Analyze Leaf & Diagnose Pathology", type="primary", use_container_width=True, key="run_disease_diag_btn"):
                 with st.spinner("Executing YOLOv8 neural network inference..."):
                     buffer = io.BytesIO()
                     chosen_leaf_img.convert("RGB").save(buffer, format="JPEG", quality=95)
@@ -2036,7 +2037,7 @@ with tab_soil:
         edited_df = st.data_editor(
             df_shc[["Parameter", "Soil Test Value", "Unit", "Rating / Status", "Confidence", "Category"]],
             disabled=["Parameter", "Unit", "Category", "Confidence"],
-            width="stretch",
+            use_container_width=True,
             hide_index=True,
             key="shc_data_editor_widget",
         )
@@ -2080,7 +2081,7 @@ with tab_soil:
 
         with c_pau4:
             st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-            if st.button("🚀 Calculate Plan", type="primary", width="stretch", key="btn_calc_pau_fert"):
+            if st.button("🚀 Calculate Plan", type="primary", use_container_width=True, key="btn_calc_pau_fert"):
                 from services.soil_health_service import SHC_BENCHMARKS
                 val_dict = {}
                 for idx_row, row in edited_df.iterrows():
@@ -2151,7 +2152,7 @@ with tab_soil:
                     "Agronomic Justification": f["reason"],
                 })
             df_fert = pd.DataFrame(fert_rows)
-            st.dataframe(df_fert, width="stretch", hide_index=True)
+            st.dataframe(df_fert, use_container_width=True, hide_index=True)
 
             if plan.get("cost_savings"):
                 st.markdown("##### 💡 Cost Savings Analysis")
@@ -2185,7 +2186,7 @@ with tab_soil:
                     if ln.lower() in shc_lang.lower():
                         clean_lang_val = ln
                         break
-                if st.button("🔊 Generate Natural Spoken Audio Advisory", width="stretch", key="btn_gen_shc_audio"):
+                if st.button("🔊 Generate Natural Spoken Audio Advisory", use_container_width=True, key="btn_gen_shc_audio"):
                     with st.spinner(f"Synthesizing spoken audio in {clean_lang_val}..."):
                         st.session_state.shc_audio = call_tts(plan.get("explanation", ""), language=clean_lang_val)
                     st.rerun()
@@ -2217,7 +2218,7 @@ with tab_soil:
                 data=report_txt,
                 file_name=f"PAU_Fertilizer_Plan_{acres_num}Acres.txt",
                 mime="text/plain",
-                width="stretch",
+                use_container_width=True,
                 key="btn_export_shc_plan",
             )
 
@@ -2239,7 +2240,7 @@ with tab_weather:
         )
     with col_search2:
         st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-        if st.button("🔄 Refresh Live Weather", width="stretch"):
+        if st.button("🔄 Refresh Live Weather", use_container_width=True):
             get_realtime_weather.clear()
             st.rerun()
 
@@ -2361,7 +2362,7 @@ with tab_market:
 
     col_mk1, col_mk2 = st.columns([3, 1])
     with col_mk2:
-        if st.button("🔄 Refresh Live APMC Rates", width="stretch"):
+        if st.button("🔄 Refresh Live APMC Rates", use_container_width=True):
             get_realtime_mandi.clear()
             st.rerun()
 
@@ -2428,7 +2429,7 @@ with tab_market:
                 })
 
             df_mandi = pd.DataFrame(table_rows)
-            st.dataframe(df_mandi, width="stretch", hide_index=True)
+            st.dataframe(df_mandi, use_container_width=True, hide_index=True)
 
         else:
             st.info(f"No commodities found matching '{crop_search}' at {chosen_mkt}.")
