@@ -1065,6 +1065,7 @@ with tab_chat:
                     st.markdown(f'<div class="chat-bubble-user">🧑‍🌾 <b>Farmer ({st.session_state.location}):</b><br>{msg["content"]}</div>', unsafe_allow_html=True)
                 else:
                     sources_html = "".join([f'<span class="source-tag">📌 {s}</span>' for s in msg.get("sources", [])])
+                    sources_section = f"<div style='margin-top:12px;'>{sources_html}</div>" if sources_html else ""
                     msg_lang = msg.get("language", "")
                     lang_tag = f'<span style="font-size:0.72rem;background:#064e3b;color:#a7f3d0;padding:2px 8px;border-radius:10px;border:1px solid #059669;margin-left:8px;">🗣️ {msg_lang}</span>' if msg_lang else ""
                     st.markdown(
@@ -1076,7 +1077,7 @@ with tab_chat:
                         f'<span style="font-size:0.75rem;color:#94a3b8;">Grounded Real-Time Advisory</span>'
                         f'</div>'
                         f'{msg["content"]}'
-                        f'{"<div style=\'margin-top:12px;\'>" + sources_html + "</div>" if sources_html else ""}'
+                        f'{sources_section}'
                         f'</div>',
                         unsafe_allow_html=True,
                     )
@@ -1455,8 +1456,6 @@ with tab_voice:
                             "user_audio": up_bytes,
                         })
                         st.rerun()
-                else:
-                    st.error(f"Audio transcription failed: {stt.get('error', 'Unrecognized audio format')}")
                 else:
                     st.error(f"Audio transcription failed: {stt.get('error', 'Unrecognized audio format')}")
 
